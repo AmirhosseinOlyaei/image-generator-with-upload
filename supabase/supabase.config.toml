@@ -1,0 +1,10 @@
+[projects]
+  [projects.default]
+    id = "hxrdvlxfcgsxptymqldi"
+    db = "postgres://postgres:eQ7N00HZkgdqaKlt@db.hxrdvlxfcgsxptymqldi.supabase.co:5432/postgres"
+    db_password = "eQ7N00HZkgdqaKlt"
+    region = "us-east-1"
+    org_id = "29292929-2929-2929-2929-292929292929"
+
+[global]
+  db_password = "eQ7N00HZkgdqaKlt"
