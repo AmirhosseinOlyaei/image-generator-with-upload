@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+import nextConfig from 'next';
+
+export default {
   reactStrictMode: true,
   images: {
-    domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com', 'oaidalleapiprodscus.blob.core.windows.net'],
+    domains: ['lh3.googleusercontent.com', 'supabase.co'],
   },
   env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 };
-
-module.exports = nextConfig;

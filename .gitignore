@@ -47,6 +47,10 @@ yarn-error.log*
 # Local development
 next-env.d.ts
 
+# Supabase
+.supabase/
+supabase.config.toml
+
 # Database
 *.sqlite
 *.db
