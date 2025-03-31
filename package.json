@@ -14,7 +14,7 @@
     "format:check": "prettier --check .",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
-    "cloudflare:build": "node cloudflare-build.js",
+    "cloudflare:build": "bash ./cloudflare-build-deploy.sh",
     "cloudflare:deploy": "pnpm cloudflare:build && wrangler pages deploy .cloudflare/deploy"
   },
   "keywords": [

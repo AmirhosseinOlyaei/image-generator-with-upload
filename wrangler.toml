@@ -2,12 +2,11 @@ name = "ghibli-vision"
 compatibility_date = "2024-03-31"
 
 # Pages configuration
-pages_build_output_dir = ".cloudflare/deploy"
-
-# Configure build settings
 [build]
-command = "./cloudflare-build-deploy.sh"
-output_directory = ".cloudflare/deploy"
+command = "npm run cloudflare:build"
+
+[site]
+bucket = ".cloudflare/deploy"
 
 # For local development
 [dev]
