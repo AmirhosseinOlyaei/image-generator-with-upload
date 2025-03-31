@@ -1,14 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useApp } from '@/contexts/AppContext'
-import { UserProfile } from '@/lib/supabase'
 import ImageUpload from '@/components/dashboard/ImageUpload'
 import ProviderKeyModal from '@/components/dashboard/ProviderKeyModal'
 import SubscriptionModal from '@/components/dashboard/SubscriptionModal'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
+import { useApp } from '@/contexts/AppContext'
+import { UserProfile } from '@/lib/supabase'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import {
@@ -26,6 +24,8 @@ import {
   SelectChangeEvent,
   Typography,
 } from '@mui/material'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 // AI providers
 const aiProviders = [
