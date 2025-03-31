@@ -73,6 +73,10 @@ CREATE POLICY "Profiles can update their own data" ON public.profiles
     FOR UPDATE
     USING (auth.uid() = id);
 
+CREATE POLICY "Profiles can insert their own data" ON public.profiles
+    FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
 -- API Keys policies
 CREATE POLICY "Users can view their own API keys" ON public.api_keys
     FOR SELECT
