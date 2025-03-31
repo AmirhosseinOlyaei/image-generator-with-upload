@@ -37,93 +37,95 @@ export default function MainAppBar() {
   const [anchorEl, setAnchorEl] = useState<
     React.MouseEvent['currentTarget'] | null
   >(null)
+  // TEMPORARILY DISABLED AUTH: Set isAuthenticated to false by default
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    const safelyFetchProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
+  // TEMPORARILY DISABLED AUTH: Comment out authentication check
+  // useEffect(() => {
+  //   const safelyFetchProfile = async (userId: string) => {
+  //     try {
+  //       const { data, error } = await supabase
+  //         .from('profiles')
+  //         .select('*')
+  //         .eq('id', userId)
+  //         .single()
 
-        if (error) {
-          throw error
-        }
+  //       if (error) {
+  //         throw error
+  //       }
 
-        if (data) {
-          return data
-        }
+  //       if (data) {
+  //         return data
+  //       }
 
-        const { data: createdData, error: createError } = await supabase
-          .from('profiles')
-          .insert([{ id: userId, credits: 0, plan: 'free' }])
-          .select()
-          .single()
+  //       const { data: createdData, error: createError } = await supabase
+  //         .from('profiles')
+  //         .insert([{ id: userId, credits: 0, plan: 'free' }])
+  //         .select()
+  //         .single()
 
-        if (createError) {
-          throw createError
-        }
+  //       if (createError) {
+  //         throw createError
+  //       }
 
-        return createdData
-      } catch (error) {
-        return null
-      }
-    }
+  //       return createdData
+  //     } catch (error) {
+  //       return null
+  //     }
+  //   }
 
-    const checkAuthStatus = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession()
+  //   const checkAuthStatus = async () => {
+  //     try {
+  //       const { data, error } = await supabase.auth.getSession()
 
-        if (error) {
-          throw error
-        }
+  //       if (error) {
+  //         throw error
+  //       }
 
-        const isLoggedIn = !!data.session
-        setIsAuthenticated(isLoggedIn)
+  //       const isLoggedIn = !!data.session
+  //       setIsAuthenticated(isLoggedIn)
 
-        // Get user avatar if authenticated
-        if (isLoggedIn && data.session) {
-          const avatarUrl = await safelyFetchProfile(data.session.user.id)
-          if (avatarUrl) {
-            setUserAvatar(avatarUrl.avatar_url || null)
-          }
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error checking auth status:', error)
-        setIsAuthenticated(false)
-      }
-    }
+  //       // Get user avatar if authenticated
+  //       if (isLoggedIn && data.session) {
+  //         const avatarUrl = await safelyFetchProfile(data.session.user.id)
+  //         if (avatarUrl) {
+  //           setUserAvatar(avatarUrl.avatar_url || null)
+  //         }
+  //       }
+  //     } catch (error) {
+  //       // eslint-disable-next-line no-console
+  //       console.error('Error checking auth status:', error)
+  //       setIsAuthenticated(false)
+  //     }
+  //   }
 
-    checkAuthStatus()
+  //   checkAuthStatus()
 
-    // Set up auth state listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setIsAuthenticated(true)
+  //   // Set up auth state listener
+  //   const {
+  //     data: { subscription },
+  //   } = supabase.auth.onAuthStateChange(async (event, session) => {
+  //     if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+  //       setIsAuthenticated(true)
 
-        if (session?.user) {
-          const profile = await safelyFetchProfile(session.user.id)
-          if (profile) {
-            setUserAvatar(profile.avatar_url || null)
-          }
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false)
-        setUserAvatar(null)
-      }
-    })
+  //       if (session?.user) {
+  //         const profile = await safelyFetchProfile(session.user.id)
+  //         if (profile) {
+  //           setUserAvatar(profile.avatar_url || null)
+  //         }
+  //       }
+  //     } else if (event === 'SIGNED_OUT') {
+  //       setIsAuthenticated(false)
+  //       setUserAvatar(null)
+  //     }
+  //   })
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [supabase])
+  //   return () => {
+  //     subscription.unsubscribe()
+  //   }
+  // }, [supabase])
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -161,6 +163,8 @@ export default function MainAppBar() {
     { name: 'Home', path: '/' },
     { name: 'How It Works', path: '/#how-it-works' },
     { name: 'Pricing', path: '/#pricing' },
+    // TEMPORARILY DISABLED AUTH: Always show dashboard link
+    { name: 'Studio', path: '/dashboard' },
   ]
 
   const drawer = (
@@ -200,7 +204,8 @@ export default function MainAppBar() {
           </ListItem>
         ))}
         <Divider sx={{ my: 1 }} />
-        {isAuthenticated ? (
+        {/* TEMPORARILY DISABLED AUTH: Comment out authenticated-only sections */}
+        {/* {isAuthenticated ? (
           <>
             <ListItem disablePadding>
               <ListItemButton
@@ -291,7 +296,7 @@ export default function MainAppBar() {
               </ListItemButton>
             </ListItem>
           </>
-        )}
+        )} */}
       </List>
     </Box>
   )
@@ -393,8 +398,9 @@ export default function MainAppBar() {
               ))}
             </Box>
 
+            {/* TEMPORARILY DISABLED AUTH: Comment out user menu */}
             {/* User menu */}
-            <Box
+            {/* <Box
               sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}
             >
               {isAuthenticated ? (
@@ -549,7 +555,7 @@ export default function MainAppBar() {
                   </Button>
                 </>
               )}
-            </Box>
+            </Box> */}
           </Toolbar>
         </Container>
       </AppBar>
