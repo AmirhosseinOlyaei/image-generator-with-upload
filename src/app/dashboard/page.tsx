@@ -1,12 +1,14 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useApp } from '@/contexts/AppContext'
+import { UserProfile } from '@/lib/supabase'
 import ImageUpload from '@/components/dashboard/ImageUpload'
 import ProviderKeyModal from '@/components/dashboard/ProviderKeyModal'
 import SubscriptionModal from '@/components/dashboard/SubscriptionModal'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
-import { useApp } from '@/contexts/AppContext'
-import { UserProfile } from '@/lib/supabase'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import {
@@ -24,10 +26,6 @@ import {
   SelectChangeEvent,
   Typography,
 } from '@mui/material'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { User } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 // AI providers
 const aiProviders = [
@@ -60,14 +58,13 @@ const aiProviders = [
 ]
 
 export default function Dashboard() {
-  const router = useRouter()
-  const { user: contextUser, isAuthLoading } = useApp()
-  const supabase = createClientComponentClient()
+  const _router = useRouter()
+  const { user: _contextUser, isAuthLoading: _isAuthLoading } = useApp()
 
   // TEMPORARILY DISABLED AUTH: Set defaults without requiring authentication
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(false) // Changed to false to skip loading state
+  const [_user, _setUser] = useState<UserProfile | null>(null)
+  const [profile, _setProfile] = useState<UserProfile | null>(null)
+  const [_loading, _setLoading] = useState(false) // Changed to false to skip loading state
   const [generating, setGenerating] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
@@ -252,7 +249,22 @@ export default function Dashboard() {
             throw new Error(
               'Image file is too large. Please use a smaller image (under 5MB).',
             )
+          } else if (
+            response.status === 504 ||
+            errorText.includes('504') ||
+            errorText.includes('Gateway Timeout')
+          ) {
+            throw new Error(
+              'Server timeout error. The image generation is taking too long. Try using a simpler image or a different AI provider.',
+            )
           } else {
+            // Log the error for debugging
+            // eslint-disable-next-line no-console
+            console.error('Server error details:', {
+              status: response.status,
+              statusText: response.statusText,
+              errorTextSample: errorText.substring(0, 500), // First 500 chars for debugging
+            })
             throw new Error(
               `Server error: ${response.status}. Please try a smaller image or a different format.`,
             )
