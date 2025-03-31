@@ -27,6 +27,47 @@ const nextConfig = {
     SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
   // Configure for Cloudflare Pages with server-side rendering
+  output: 'standalone',
+  // Optimize bundle size
+  webpack: (config, { dev, isServer }) => {
+    // Split chunks to reduce file sizes
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        maxInitialRequests: 25,
+        minSize: 20000,
+        maxSize: 20 * 1024 * 1024, // 20 MB max chunk size (under Cloudflare's 25MB limit)
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          framework: {
+            name: 'framework',
+            test: /[\\/]node_modules[\\/](@react|react|react-dom|next|@next)[\\/]/,
+            priority: 40,
+            enforce: true,
+          },
+          lib: {
+            test: /[\\/]node_modules[\\/]/,
+            name(module) {
+              const packageName = module.context.match(
+                /[\\/]node_modules[\\/](.*?)([\\/]|$)/,
+              )[1]
+              return `npm.${packageName.replace('@', '')}`
+            },
+            priority: 30,
+            minChunks: 1,
+            reuseExistingChunk: true,
+          },
+          commons: {
+            name: 'commons',
+            minChunks: 2,
+            priority: 20,
+          },
+        },
+      }
+    }
+    return config
+  },
 }
 
 export default nextConfig

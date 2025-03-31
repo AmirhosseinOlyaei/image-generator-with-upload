@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "worker:dev": "wrangler dev",
-    "worker:deploy": "wrangler deploy"
+    "worker:deploy": "wrangler deploy",
+    "cloudflare:build": "node cloudflare-build.js",
+    "cloudflare:deploy": "pnpm cloudflare:build && wrangler pages deploy .vercel/output/static"
   },
   "keywords": [
     "ghibli",

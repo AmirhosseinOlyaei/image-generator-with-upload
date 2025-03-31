@@ -1,0 +1,27 @@
+# Configuration for Cloudflare Pages
+# This file helps optimize your Next.js application for Cloudflare Pages
+
+# Set build output directory
+build.output_directory = ".vercel/output/static"
+
+# Configure build command
+build.command = "pnpm build"
+
+# Configure compatibility date
+compatibility_date = "2024-03-31"
+
+# Configure compatibility flags
+compatibility_flags = ["nodejs_compat"]
+
+# Configure routes
+[[routes]]
+pattern = "/_next/static/*"
+cache = { browser_ttl = 31536000, edge_ttl = 31536000 }
+
+[[routes]]
+pattern = "/api/*"
+script = ".vercel/output/functions/api.func"
+
+[[routes]]
+pattern = "/*"
+script = ".vercel/output/functions/index.func"
