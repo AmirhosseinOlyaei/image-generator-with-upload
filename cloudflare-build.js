@@ -116,7 +116,10 @@ const routesJson = {
   exclude: [],
 }
 
-fs.writeFileSync(`${deployDir}/_routes.json`, JSON.stringify(routesJson, null, 2))
+fs.writeFileSync(
+  `${deployDir}/_routes.json`,
+  JSON.stringify(routesJson, null, 2),
+)
 
 console.log('✅ Static site created successfully!')
 console.log(`🌐 Deploy the "${deployDir}" directory to Cloudflare Pages`)

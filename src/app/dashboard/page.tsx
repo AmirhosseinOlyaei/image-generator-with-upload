@@ -6,8 +6,6 @@ import SubscriptionModal from '@/components/dashboard/SubscriptionModal'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
 import { useApp } from '@/contexts/AppContext'
-import { UserProfile } from '@/lib/supabase'
-import { generateImage } from '@/utils/api/imageGeneration'
 import AutoFixHighRoundedIcon from '@mui/icons-material/AutoFixHighRounded'
 import SaveAltRoundedIcon from '@mui/icons-material/SaveAltRounded'
 import {
@@ -22,6 +20,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  SelectChangeEvent,
   TextField,
   Typography,
 } from '@mui/material'
@@ -53,19 +52,27 @@ const aiProviders = [
   {
     id: 'leonardo',
     name: 'Leonardo AI',
-    description: 'AI platform with fine-tuned Ghibli aesthetic capabilities',
+    description: 'Emerging AI with good artistic capabilities',
     disabled: true,
   },
 ]
 
+// Mock profile for static site
+const mockProfile = {
+  id: 'static-user',
+  email: 'demo@example.com',
+  full_name: 'Demo User',
+  plan: 'free',
+  credits: 10,
+  created_at: new Date().toISOString(),
+}
+
 export default function Dashboard() {
   const _router = useRouter()
-  const { user: _contextUser, isAuthLoading: _isAuthLoading } = useApp()
+  const { addNotification } = useApp()
 
-  // TEMPORARILY DISABLED AUTH: Set defaults without requiring authentication
-  const [_user, _setUser] = React.useState<UserProfile | null>(null)
-  const [profile, _setProfile] = React.useState<UserProfile | null>(null)
-  const [_loading, _setLoading] = React.useState(false) // Changed to false to skip loading state
+  // Static site implementation without authentication
+  const [profile] = React.useState(mockProfile)
   const [generating, setGenerating] = React.useState(false)
   const [uploadedImage, setUploadedImage] = React.useState<File | null>(null)
   const [uploadedImageUrl, setUploadedImageUrl] = React.useState<string | null>(
@@ -75,7 +82,7 @@ export default function Dashboard() {
     string | null
   >(null)
   const [selectedProvider, setSelectedProvider] = React.useState('openai')
-  const [providerKeys, setProviderKeys] = React.useState<
+  const [_providerKeys, setProviderKeys] = React.useState<
     Record<string, string>
   >({})
   const [error, setError] = React.useState<string | null>(null)
@@ -98,31 +105,12 @@ export default function Dashboard() {
     }
   }
 
-  const handleProviderChange = (event: any) => {
-    const newProvider = event.target.value
-    // Only allow changing to enabled providers
-    const provider = aiProviders.find(p => p.id === newProvider)
-    if (provider && !provider.disabled) {
-      setSelectedProvider(newProvider)
-    }
+  const handleProviderChange = (event: SelectChangeEvent) => {
+    setSelectedProvider(event.target.value as string)
   }
 
-  const handleCustomApiKeySubmit = async (providerKey: string) => {
-    setProviderKeys({ ...providerKeys, [selectedProvider]: providerKey })
-    setShowProviderKeyModal(false)
-
-    // TEMPORARILY DISABLED AUTH: Comment out profile update
-    // // Update the user's custom API key in the database
-    // if (user) {
-    //   const { error } = await supabase
-    //     .from('profiles')
-    //     .update({ custom_api_key: providerKey })
-    //     .eq('id', user.id)
-
-    //   if (error) {
-    //     setError('Failed to save your API key. Please try again.')
-    //   }
-    // }
+  const handlePromptChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPrompt(event.target.value)
   }
 
   const handleGenerateImage = async () => {
@@ -131,298 +119,321 @@ export default function Dashboard() {
       return
     }
 
-    setGenerating(true)
+    if (!prompt) {
+      setError('Please enter a prompt')
+      return
+    }
+
     setError(null)
-    setGeneratedImageUrl(null)
+    setGenerating(true)
 
     try {
-      const imageGenerationResult = await generateImage({
-        image: uploadedImage,
-        prompt:
-          'Transform this image into Studio Ghibli style: ' + (prompt || ''),
-        provider: selectedProvider,
-        apiKey: providerKeys?.[selectedProvider],
-      })
+      // For static site, simulate image generation with a placeholder
+      setTimeout(() => {
+        setGeneratedImageUrl('/placeholder-ghibli.jpg')
+        setGenerating(false)
 
-      if (!imageGenerationResult.success || !imageGenerationResult.imageUrl) {
-        throw new Error(
-          imageGenerationResult.error || 'Failed to generate image',
-        )
+        addNotification({
+          message: 'Image generated successfully!',
+          type: 'success',
+        })
+      }, 2000)
+    } catch (error: unknown) {
+      // Using 'unknown' type for error
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError('Failed to generate image. Please try again.')
       }
-
-      setGeneratedImageUrl(imageGenerationResult.imageUrl)
-      setGenerating(false)
-    } catch (error) {
-      console.error('Error generating image:', error)
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'An unknown error occurred while generating the image',
-      )
       setGenerating(false)
     }
   }
 
-  const handleDownloadImage = () => {
+  const handleSaveImage = () => {
     if (generatedImageUrl) {
-      try {
-        setError(null)
+      const link = document.createElement('a')
+      link.href = generatedImageUrl
+      link.download = 'ghibli-transformed-image.jpg'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
 
-        // Create a download link that points to our proxy API
-        const proxyUrl = `/api/download?url=${encodeURIComponent(generatedImageUrl)}`
-
-        // Create and trigger download
-        const link = document.createElement('a')
-        link.href = proxyUrl
-        link.download = `ghibli-transformation-${new Date().getTime()}.png`
-        document.body.appendChild(link)
-        link.click()
-
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(link)
-        }, 100)
-      } catch (error) {
-        console.error('Download error:', error)
-        setError('Failed to download image. Please try again.')
-      }
+      addNotification({
+        message: 'Image saved successfully!',
+        type: 'success',
+      })
     }
   }
 
-  const handleShowOptions = () => {
-    // Determine which modal to show
-    if (profile && (profile.credits ?? 0) > 0 && profile.plan === 'free') {
-      setShowProviderKeyModal(true)
-    }
+  const handleSetProviderKey = (provider: string, key: string) => {
+    setProviderKeys(prev => ({
+      ...prev,
+      [provider]: key,
+    }))
+    setShowProviderKeyModal(false)
+
+    addNotification({
+      message: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key saved!`,
+      type: 'success',
+    })
   }
 
-  // TEMPORARILY DISABLED AUTH: Remove loading check
-  // if (loading) {
-  //   return (
-  //     <Backdrop
-  //       sx={{ color: '#fff', zIndex: theme => theme.zIndex.drawer + 1 }}
-  //       open={true}
-  //     >
-  //       <CircularProgress color='inherit' />
-  //     </Backdrop>
-  //   )
-  // }
+  const handleUpgradeClick = () => {
+    setShowSubscriptionModal(true)
+  }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <MainAppBar />
-
-      <Container component='main' sx={{ flexGrow: 1, py: 4 }}>
+      <Container
+        maxWidth='lg'
+        sx={{
+          mt: 4,
+          mb: 4,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <Typography
           variant='h4'
           component='h1'
           gutterBottom
-          sx={{ fontWeight: 'bold', color: 'primary.main', mb: 4 }}
+          sx={{ fontWeight: 'bold', mb: 3 }}
         >
-          Transform Your Image
+          Transform Your Images into Studio Ghibli Art
         </Typography>
 
-        {error && (
-          <Alert
-            severity='error'
-            sx={{ mb: 3 }}
-            action={
-              profile &&
-              (profile.credits ?? 0) > 0 &&
-              profile.plan === 'free' ? (
-                <Button
-                  color='inherit'
-                  size='small'
-                  onClick={handleShowOptions}
-                >
-                  Show Options
-                </Button>
-              ) : null
-            }
-          >
-            {error}
-          </Alert>
-        )}
-
-        {/* TEMPORARILY DISABLED AUTH: Add info alert about disabled auth */}
-        <Alert severity='info' sx={{ mb: 3 }}>
-          Authentication is temporarily disabled. You can generate images
-          without logging in.
-        </Alert>
-
         <Grid container spacing={4}>
-          <Grid item xs={12} md={7}>
-            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-              <Typography variant='h6' gutterBottom>
-                Upload Your Image
-              </Typography>
-
-              <ImageUpload
-                onFileSelected={handleFileUpload}
-                imagePreview={uploadedImageUrl}
-              />
-
-              <Box sx={{ mt: 3 }}>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel id='ai-provider-label'>AI Provider</InputLabel>
-                  <Select
-                    labelId='ai-provider-label'
-                    id='ai-provider'
-                    value={selectedProvider}
-                    label='AI Provider'
-                    onChange={handleProviderChange}
-                  >
-                    {aiProviders.map(provider => (
-                      <MenuItem key={provider.id} value={provider.id}>
-                        {provider.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel id='prompt-label'>
-                    Custom Prompt (Optional)
-                  </InputLabel>
-                  <TextField
-                    id='prompt'
-                    label='Custom Prompt'
-                    placeholder='Add details to your Ghibli transformation'
-                    value={prompt}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setPrompt(e.target.value)
-                    }
-                    fullWidth
-                    multiline
-                    rows={2}
-                    variant='outlined'
-                  />
-                </FormControl>
-
-                <Button
-                  variant='contained'
-                  color='primary'
-                  fullWidth
-                  size='large'
-                  startIcon={<AutoFixHighRoundedIcon />}
-                  onClick={handleGenerateImage}
-                  disabled={!uploadedImage || generating}
-                  sx={{
-                    py: 1.5,
-                    position: 'relative',
-                  }}
-                >
-                  {generating ? (
-                    <>
-                      <CircularProgress
-                        size={24}
-                        color='inherit'
-                        sx={{ position: 'absolute' }}
-                      />
-                      <span style={{ opacity: 0 }}>Generate Ghibli Image</span>
-                    </>
-                  ) : (
-                    'Generate Ghibli Image'
-                  )}
-                </Button>
-              </Box>
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} md={6}>
             <Paper
+              elevation={3}
               sx={{
                 p: 3,
-                borderRadius: 2,
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
               }}
             >
               <Typography variant='h6' gutterBottom>
-                Result
+                Upload Your Image
               </Typography>
+              <Box sx={{ mb: 3, flex: 1 }}>
+                <ImageUpload onFileUpload={handleFileUpload} />
+              </Box>
 
-              {generatedImageUrl ? (
-                <Box
-                  sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}
+              <Typography variant='h6' gutterBottom>
+                Transformation Settings
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id='provider-select-label'>AI Provider</InputLabel>
+                <Select
+                  labelId='provider-select-label'
+                  id='provider-select'
+                  value={selectedProvider}
+                  label='AI Provider'
+                  onChange={handleProviderChange}
                 >
-                  <Box
-                    sx={{
-                      flexGrow: 1,
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                      position: 'relative',
-                      minHeight: 300,
-                      mb: 2,
-                    }}
-                  >
-                    <img
-                      src={generatedImageUrl}
-                      alt='Generated Ghibli-style image'
-                      style={{
-                        objectFit: 'contain',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    />
-                  </Box>
+                  {aiProviders.map(provider => (
+                    <MenuItem
+                      key={provider.id}
+                      value={provider.id}
+                      disabled={provider.disabled}
+                    >
+                      {provider.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
+              <TextField
+                fullWidth
+                label='Transformation Prompt'
+                placeholder="Describe the Ghibli style you want (e.g., 'Transform into Howl's Moving Castle style')"
+                multiline
+                rows={3}
+                value={prompt}
+                onChange={handlePromptChange}
+                sx={{ mb: 3 }}
+              />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button
+                  variant='contained'
+                  color='primary'
+                  startIcon={<AutoFixHighRoundedIcon />}
+                  onClick={handleGenerateImage}
+                  disabled={generating || !uploadedImage || !prompt}
+                >
+                  {generating ? (
+                    <>
+                      <CircularProgress
+                        size={24}
+                        color='inherit'
+                        sx={{ mr: 1 }}
+                      />
+                      Generating...
+                    </>
+                  ) : (
+                    'Transform Image'
+                  )}
+                </Button>
+
+                <Button
+                  variant='outlined'
+                  onClick={() => setShowProviderKeyModal(true)}
+                >
+                  Set API Key
+                </Button>
+              </Box>
+
+              {error && (
+                <Alert severity='error' sx={{ mt: 2 }}>
+                  {error}
+                </Alert>
+              )}
+
+              {profile && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Credits remaining: {profile.credits} / Monthly limit
+                  </Typography>
+                  <Typography variant='body2' color='text.secondary'>
+                    Current plan:{' '}
+                    {profile.plan.charAt(0).toUpperCase() +
+                      profile.plan.slice(1)}
+                  </Typography>
                   <Button
-                    variant='outlined'
-                    color='primary'
-                    fullWidth
-                    startIcon={<SaveAltRoundedIcon />}
-                    onClick={handleDownloadImage}
-                    sx={{ mt: 'auto' }}
+                    variant='text'
+                    size='small'
+                    onClick={handleUpgradeClick}
+                    sx={{ mt: 1 }}
                   >
-                    Download Image
+                    Upgrade for more credits
                   </Button>
                 </Box>
-              ) : (
+              )}
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 3,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Typography variant='h6' gutterBottom>
+                Preview
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                  mb: 2,
+                  flex: 1,
+                }}
+              >
                 <Box
                   sx={{
-                    flexGrow: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: 'background.default',
+                    flex: 1,
+                    border: '1px dashed #ccc',
                     borderRadius: 1,
-                    p: 4,
-                    minHeight: 300,
-                    border: '1px dashed',
-                    borderColor: 'divider',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    p: 1,
+                    position: 'relative',
+                    minHeight: 250,
                   }}
                 >
-                  <Typography color='text.secondary' align='center'>
-                    Your Ghibli-style image will appear here after generation
-                  </Typography>
+                  {uploadedImageUrl ? (
+                    <Box
+                      component='img'
+                      src={uploadedImageUrl}
+                      alt='Uploaded'
+                      sx={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  ) : (
+                    <Typography color='text.secondary'>
+                      Original Image
+                    </Typography>
+                  )}
                 </Box>
+
+                <Box
+                  sx={{
+                    flex: 1,
+                    border: '1px dashed #ccc',
+                    borderRadius: 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    p: 1,
+                    position: 'relative',
+                    minHeight: 250,
+                  }}
+                >
+                  {generating ? (
+                    <CircularProgress />
+                  ) : generatedImageUrl ? (
+                    <Box
+                      component='img'
+                      src={generatedImageUrl}
+                      alt='Generated'
+                      sx={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  ) : (
+                    <Typography color='text.secondary'>
+                      Transformed Image
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+
+              {generatedImageUrl && (
+                <Button
+                  variant='contained'
+                  color='secondary'
+                  startIcon={<SaveAltRoundedIcon />}
+                  onClick={handleSaveImage}
+                  sx={{ alignSelf: 'flex-start' }}
+                >
+                  Save Image
+                </Button>
               )}
             </Paper>
           </Grid>
         </Grid>
       </Container>
 
+      <Footer />
+
       <ProviderKeyModal
         open={showProviderKeyModal}
         onClose={() => setShowProviderKeyModal(false)}
-        onSubmit={handleCustomApiKeySubmit}
-        aiProvider={
-          aiProviders.find(p => p.id === selectedProvider) || aiProviders[0]
-        }
-        onSubscribe={() => {
-          setShowProviderKeyModal(false)
-          setShowSubscriptionModal(true)
-        }}
+        onSave={handleSetProviderKey}
+        provider={selectedProvider}
       />
 
       <SubscriptionModal
         open={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
+        currentPlan={profile?.plan || 'free'}
       />
-
-      <Footer />
     </Box>
   )
 }

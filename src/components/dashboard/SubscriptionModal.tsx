@@ -1,268 +1,231 @@
 'use client'
 
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import CloseIcon from '@mui/icons-material/Close'
-import StarIcon from '@mui/icons-material/Star'
 import {
-  Alert,
   Box,
   Button,
-  Chip,
+  Card,
+  CardActions,
+  CardContent,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
   IconButton,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Paper,
-  Snackbar,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import CloseIcon from '@mui/icons-material/Close'
+import React from 'react'
 
 interface SubscriptionModalProps {
   open: boolean
   onClose: () => void
+  currentPlan: string
 }
 
-// Subscription plans
+// Subscription plan data
 const plans = [
   {
-    id: 'basic',
-    name: 'Basic',
-    price: '$5.99',
-    period: 'month',
+    id: 'free',
+    name: 'Free',
+    price: '$0',
+    description: 'Basic access to Ghibli transformations',
     features: [
-      '15 Ghibli transformations per month',
-      'All AI providers available',
-      'Standard resolution images',
+      '10 transformations per month',
+      'Standard quality images',
+      'OpenAI DALL-E 3 support',
       'Email support',
     ],
-    isPopular: false,
-    color: 'primary',
+    buttonText: 'Current Plan',
+    recommended: false,
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: '$12.99',
+    id: 'pro',
+    name: 'Pro',
+    price: '$9.99',
     period: 'month',
+    description: 'For enthusiasts who want more transformations',
     features: [
-      '50 Ghibli transformations per month',
-      'All AI providers available',
-      'High resolution images',
+      '100 transformations per month',
+      'High quality images',
+      'All AI providers support',
       'Priority email support',
-      'Advanced prompt customization',
-      'Remove watermarks',
+      'No watermarks',
     ],
-    isPopular: true,
-    color: 'secondary',
+    buttonText: 'Upgrade to Pro',
+    recommended: true,
   },
   {
-    id: 'ultimate',
-    name: 'Ultimate',
-    price: '$29.99',
+    id: 'unlimited',
+    name: 'Unlimited',
+    price: '$19.99',
     period: 'month',
+    description: 'For professionals with unlimited needs',
     features: [
-      'Unlimited Ghibli transformations',
-      'All AI providers available',
-      'Ultra-high resolution images',
+      'Unlimited transformations',
+      'Highest quality images',
+      'All AI providers support',
       'Priority email & chat support',
-      'Advanced prompt customization',
-      'Remove watermarks',
+      'No watermarks',
+      'API access',
       'Commercial usage rights',
-      'Batch processing (up to 10 images)',
     ],
-    isPopular: false,
-    color: 'primary',
+    buttonText: 'Upgrade to Unlimited',
+    recommended: false,
   },
 ]
 
 export default function SubscriptionModal({
   open,
   onClose,
+  currentPlan: _currentPlan, // Rename to _currentPlan to indicate it's unused
 }: SubscriptionModalProps) {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [notification, setNotification] = useState(false)
-
-  const handleSelectPlan = (planId: string) => {
-    setSelectedPlan(planId)
-  }
-
-  const handleSubscribe = () => {
-    // In a real application, this would redirect to a payment processor
-    setNotification(true)
-    setTimeout(() => {
-      onClose()
-    }, 2000)
-  }
-
-  const handleCloseNotification = () => {
-    setNotification(false)
+  const handleSubscribe = (planId: string) => {
+    // In a static site, we'll just show a notification
+    // eslint-disable-next-line no-console
+    console.log(`Subscribing to ${planId} plan`)
+    onClose()
   }
 
   return (
-    <>
-      <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
-        <DialogTitle sx={{ pr: 6 }}>
-          Choose Your Subscription Plan
-          <IconButton
-            aria-label='close'
-            onClick={onClose}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: theme => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={'lg'}
+      fullWidth
+      scroll={'paper'}
+      aria-labelledby={'subscription-dialog-title'}
+    >
+      <DialogTitle id={'subscription-dialog-title'} sx={{ pr: 6 }}>
+        Subscription Plans
+        <IconButton
+          aria-label={'close'}
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: theme => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Typography variant={'h6'} gutterBottom>
+          Choose the plan that works for you
+        </Typography>
+        <Typography variant={'body2'} color={'text.secondary'} paragraph>
+          All plans include access to our Ghibli transformation technology.
+          Upgrade for more transformations and features.
+        </Typography>
 
-        <DialogContent>
-          <Typography variant='body1' paragraph>
-            Unlock unlimited Ghibli-style transformations with one of our
-            subscription plans. Choose the plan that suits your needs and start
-            transforming your photos today.
-          </Typography>
-
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            {plans.map(plan => (
-              <Grid item xs={12} md={4} key={plan.id}>
-                <Paper
-                  elevation={selectedPlan === plan.id ? 6 : 2}
-                  sx={{
-                    p: 3,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    transition: 'all 0.2s ease-in-out',
-                    borderColor:
-                      selectedPlan === plan.id
-                        ? `${plan.color}.main`
-                        : 'transparent',
-                    borderWidth: 2,
-                    borderStyle: 'solid',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: '0 12px 20px rgba(0,0,0,0.1)',
-                    },
-                  }}
-                  onClick={() => handleSelectPlan(plan.id)}
-                >
-                  {plan.isPopular && (
-                    <Chip
-                      label='Most Popular'
-                      color='secondary'
-                      size='small'
-                      icon={<StarIcon />}
-                      sx={{
-                        position: 'absolute',
-                        top: -12,
-                        right: 20,
-                        fontWeight: 'bold',
-                      }}
-                    />
-                  )}
-
-                  <Typography
-                    variant='h5'
-                    component='h3'
-                    gutterBottom
-                    sx={{ fontWeight: 'bold', color: `${plan.color}.main` }}
+        <Grid container spacing={3} sx={{ mt: 2 }}>
+          {plans.map(plan => (
+            <Grid item xs={12} md={4} key={plan.id}>
+              <Card
+                variant={'outlined'}
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
+                  ...(plan.recommended && {
+                    borderColor: 'primary.main',
+                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                  }),
+                }}
+              >
+                {plan.recommended && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                    }}
                   >
+                    RECOMMENDED
+                  </Box>
+                )}
+
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography variant={'h5'} component={'div'} gutterBottom>
                     {plan.name}
                   </Typography>
-
                   <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 2 }}>
-                    <Typography
-                      variant='h3'
-                      component='span'
-                      sx={{ fontWeight: 'bold' }}
-                    >
+                    <Typography variant={'h4'} component={'span'}>
                       {plan.price}
                     </Typography>
-                    <Typography
-                      variant='body1'
-                      component='span'
-                      color='text.secondary'
-                      sx={{ ml: 1 }}
-                    >
-                      /{plan.period}
-                    </Typography>
+                    {plan.period && (
+                      <Typography
+                        variant={'subtitle1'}
+                        component={'span'}
+                        color={'text.secondary'}
+                        sx={{ ml: 1 }}
+                      >
+                        /{plan.period}
+                      </Typography>
+                    )}
                   </Box>
-
-                  <List sx={{ flexGrow: 1, mb: 2 }}>
+                  <Typography
+                    variant={'body2'}
+                    color={'text.secondary'}
+                    sx={{ mb: 2 }}
+                  >
+                    {plan.description}
+                  </Typography>
+                  <Divider sx={{ my: 2 }} />
+                  <List dense disablePadding>
                     {plan.features.map((feature, index) => (
-                      <ListItem key={index} disableGutters sx={{ py: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 32 }}>
-                          <CheckCircleIcon
-                            color={plan.color as 'primary' | 'secondary'}
-                            fontSize='small'
+                      <ListItem key={index} disableGutters disablePadding>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <CheckCircleOutlineIcon
+                            color={'primary'}
+                            fontSize={'small'}
                           />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={feature}
-                          primaryTypographyProps={{
-                            variant: 'body2',
-                            color: 'text.primary',
-                          }}
-                        />
+                        <ListItemText primary={feature} />
                       </ListItem>
                     ))}
                   </List>
-
+                </CardContent>
+                <CardActions sx={{ p: 2, pt: 0 }}>
                   <Button
                     fullWidth
-                    variant={
-                      selectedPlan === plan.id ? 'contained' : 'outlined'
-                    }
-                    color={plan.color as 'primary' | 'secondary'}
-                    size='large'
-                    sx={{ mt: 'auto' }}
-                    onClick={() => handleSelectPlan(plan.id)}
+                    variant={plan.id === 'free' ? 'outlined' : 'contained'}
+                    color={plan.recommended ? 'primary' : 'inherit'}
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={plan.id === 'free'}
                   >
-                    {selectedPlan === plan.id ? 'Selected' : 'Choose Plan'}
+                    {plan.buttonText}
                   </Button>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </DialogContent>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
 
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button
-            onClick={handleSubscribe}
-            variant='contained'
-            disabled={!selectedPlan}
-            color='primary'
-            size='large'
-          >
-            Subscribe Now
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={notification}
-        autoHideDuration={6000}
-        onClose={handleCloseNotification}
-      >
-        <Alert
-          onClose={handleCloseNotification}
-          severity='info'
-          sx={{ width: '100%' }}
-        >
-          Subscription functionality is not available in this demo. This is UI
-          only.
-        </Alert>
-      </Snackbar>
-    </>
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant={'body2'} color={'text.secondary'}>
+            All plans come with a 7-day money-back guarantee.
+            <br />
+            Have questions? Contact our{' '}
+            <a href={'mailto:support@example.com'}>support team</a>.
+          </Typography>
+        </Box>
+      </DialogContent>
+    </Dialog>
   )
 }

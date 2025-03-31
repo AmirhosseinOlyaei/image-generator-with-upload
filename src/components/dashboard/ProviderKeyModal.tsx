@@ -1,156 +1,135 @@
 'use client'
 
-import CloseIcon from '@mui/icons-material/Close'
-import Visibility from '@mui/icons-material/Visibility'
-import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import {
-  Alert,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
-  IconButton,
   TextField,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface ProviderKeyModalProps {
   open: boolean
   onClose: () => void
-
-  onSubmit: (apiKey: string) => void
-  onSubscribe: () => void
-  aiProvider: {
-    id: string
-    name: string
-    description: string
-  }
+  onSave: (provider: string, key: string) => void
+  provider: string
 }
 
 export default function ProviderKeyModal({
   open,
   onClose,
-  onSubmit,
-  onSubscribe,
-  aiProvider,
+  onSave,
+  provider,
 }: ProviderKeyModalProps) {
-  const { name } = aiProvider
-  const [key, setKey] = useState('')
-  const [error, setError] = useState('')
-  const [showApiKey, setShowApiKey] = useState(false)
+  const [apiKey, setApiKey] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = () => {
-    if (!key.trim()) {
-      setError('Please enter a valid API key')
+  // Reset state when modal opens
+  useEffect(() => {
+    if (open) {
+      setApiKey('')
+      setError(null)
+    }
+  }, [open])
+
+  const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setApiKey(event.target.value)
+    setError(null)
+  }
+
+  const handleSave = () => {
+    if (!apiKey.trim()) {
+      setError('API key cannot be empty')
       return
     }
 
-    onSubmit(key)
-    setKey('')
-    setError('')
+    // Basic validation based on provider
+    if (provider === 'openai' && !apiKey.startsWith('sk-')) {
+      setError('OpenAI API keys should start with "sk-"')
+      return
+    }
+
+    onSave(provider, apiKey.trim())
   }
 
-  const handleClose = () => {
-    setKey('')
-    setError('')
-    onClose()
-  }
+  const getProviderName = (providerId: string): string => {
+    const providerMap: Record<string, string> = {
+      openai: 'OpenAI',
+      stability: 'Stability AI',
+      midjourney: 'Midjourney',
+      leonardo: 'Leonardo AI',
+    }
 
-  const toggleShowApiKey = () => {
-    setShowApiKey(!showApiKey)
+    return providerMap[providerId] || providerId
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
-      <DialogTitle sx={{ pr: 6 }}>
-        Add Your {name} API Key
-        <IconButton
-          aria-label='close'
-          onClick={handleClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
+    <Dialog open={open} onClose={onClose} maxWidth='sm' fullWidth>
+      <DialogTitle>Set API Key for {getProviderName(provider)}</DialogTitle>
       <DialogContent>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant='body1' paragraph>
-            To continue generating Ghibli-style images, you need to provide your
-            own {name} API key. Your API key will be securely stored and used
-            only for your requests.
+        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+          Enter your API key for {getProviderName(provider)} to use their image
+          generation services. Your key will be securely stored.
+        </Typography>
+
+        <TextField
+          autoFocus
+          margin='dense'
+          label='API Key'
+          type='password'
+          fullWidth
+          variant='outlined'
+          value={apiKey}
+          onChange={handleApiKeyChange}
+          error={!!error}
+          helperText={error}
+        />
+
+        <Box sx={{ mt: 2 }}>
+          <Typography variant='body2' color='text.secondary'>
+            How to get an API key:
           </Typography>
-
-          <Alert severity='info' sx={{ mb: 2 }}>
-            You've used your free transformation. You can either provide your
-            own API key or subscribe to a plan.
-          </Alert>
-
-          <TextField
-            label={`${name} API Key`}
-            fullWidth
-            value={key}
-            onChange={e => setKey(e.target.value)}
-            error={!!error}
-            helperText={error}
-            type={showApiKey ? 'text' : 'password'}
-            placeholder='sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-            margin='dense'
-            InputProps={{
-              endAdornment: (
-                <IconButton
-                  aria-label='toggle password visibility'
-                  onClick={toggleShowApiKey}
-                  edge='end'
+          <ol>
+            <li>
+              <Typography variant='body2'>
+                Go to{' '}
+                <a
+                  href={
+                    provider === 'openai'
+                      ? 'https://platform.openai.com/account/api-keys'
+                      : '#'
+                  }
+                  target='_blank'
+                  rel='noopener noreferrer'
                 >
-                  {showApiKey ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              ),
-            }}
-          />
-
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            sx={{ display: 'block', mt: 1 }}
-          >
-            You can find your API key in your {name} dashboard. Visit their
-            website to create an account and get your key.
-          </Typography>
-        </Box>
-
-        <Divider sx={{ my: 2 }}>OR</Divider>
-
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Typography variant='body1' gutterBottom>
-            Subscribe to one of our plans for unlimited transformations
-          </Typography>
-          <Button
-            variant='contained'
-            color='secondary'
-            onClick={onSubscribe}
-            sx={{ mt: 1 }}
-          >
-            View Subscription Plans
-          </Button>
+                  {getProviderName(provider)} API dashboard
+                </a>
+              </Typography>
+            </li>
+            <li>
+              <Typography variant='body2'>
+                Create a new API key or use an existing one
+              </Typography>
+            </li>
+            <li>
+              <Typography variant='body2'>
+                Copy and paste the key above
+              </Typography>
+            </li>
+          </ol>
         </Box>
       </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={handleClose}>Cancel</Button>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
         <Button
-          onClick={handleSubmit}
           variant='contained'
-          disabled={!key.trim()}
+          color='secondary'
+          sx={{ mt: 1 }}
+          onClick={handleSave}
         >
           Save API Key
         </Button>

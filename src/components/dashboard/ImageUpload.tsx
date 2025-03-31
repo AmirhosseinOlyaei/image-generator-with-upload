@@ -1,19 +1,14 @@
 'use client'
 
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
-import DeleteIcon from '@mui/icons-material/Delete'
 import { Box, Button, CircularProgress, Typography } from '@mui/material'
 import { useRef, useState } from 'react'
 
 interface ImageUploadProps {
-  onFileSelected: (file: File | null) => void
-  imagePreview: string | null
+  onFileUpload: (file: File | null) => void
 }
 
-export default function ImageUpload({
-  onFileSelected,
-  imagePreview,
-}: ImageUploadProps) {
+export default function ImageUpload({ onFileUpload }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,51 +46,44 @@ export default function ImageUpload({
             const newWidth = Math.floor(img.width * scaleFactor)
             const newHeight = Math.floor(img.height * scaleFactor)
 
-            // Create a new canvas for the resized image
-            const resizeCanvas = document.createElement('canvas')
-            resizeCanvas.width = newWidth
-            resizeCanvas.height = newHeight
+            // Create a new canvas with the scaled dimensions
+            const scaledCanvas = document.createElement('canvas')
+            scaledCanvas.width = newWidth
+            scaledCanvas.height = newHeight
 
-            // Draw the resized image
-            const resizeCtx = resizeCanvas.getContext('2d')
-            if (!resizeCtx) {
-              reject(new Error('Failed to get resize canvas context'))
+            // Draw the scaled image
+            const scaledCtx = scaledCanvas.getContext('2d')
+            if (!scaledCtx) {
+              reject(new Error('Failed to get scaled canvas context'))
               return
             }
+            scaledCtx.drawImage(img, 0, 0, newWidth, newHeight)
 
-            resizeCtx.drawImage(img, 0, 0, newWidth, newHeight)
+            // Convert to PNG again
+            scaledCanvas.toBlob(
+              scaledBlob => {
+                if (!scaledBlob) {
+                  reject(new Error('Failed to convert scaled image to PNG'))
+                  return
+                }
 
-            // Convert the resized image to PNG
-            resizeCanvas.toBlob(resizedBlob => {
-              if (!resizedBlob) {
-                reject(new Error('Failed to convert resized image to PNG'))
-                return
-              }
-
-              // Create a new File object with the PNG blob
-              const pngFile = new File(
-                [resizedBlob],
-                file.name.replace(/\.[^/.]+$/, '') + '.png',
-                {
+                // Create a new File object from the blob
+                const processedFile = new File([scaledBlob], file.name, {
                   type: 'image/png',
-                  lastModified: file.lastModified,
-                },
-              )
-
-              resolve(pngFile)
-            }, 'image/png')
-          } else {
-            // If less than 5MB, use the original size
-            const pngFile = new File(
-              [blob],
-              file.name.replace(/\.[^/.]+$/, '') + '.png',
-              {
-                type: 'image/png',
-                lastModified: file.lastModified,
+                  lastModified: Date.now(),
+                })
+                resolve(processedFile)
               },
+              'image/png',
+              0.9,
             )
-
-            resolve(pngFile)
+          } else {
+            // If already under 5MB, use the original blob
+            const processedFile = new File([blob], file.name, {
+              type: 'image/png',
+              lastModified: Date.now(),
+            })
+            resolve(processedFile)
           }
         }, 'image/png')
       }
@@ -113,85 +101,79 @@ export default function ImageUpload({
           reject(new Error('Failed to read file'))
         }
       }
-      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'))
+      }
       reader.readAsDataURL(file)
     })
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (files && files.length > 0) {
-      handleUpload(files[0])
-    }
-  }
-
-  const handleUpload = async (file: File) => {
-    // Validate file type
-    if (!file.type.match('image.*')) {
-      setError('Please select an image file')
-      return
-    }
-
-    setUploading(true)
-    setError(null)
-
-    try {
-      // Convert the image to a valid PNG format and ensure it's under 5MB
-      const processedFile = await convertToValidPNG(file)
-
-      // Pass the processed file to the parent component
-      onFileSelected(processedFile)
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error processing file:', error)
-      setError(
-        error instanceof Error ? error.message : 'Failed to process image',
-      )
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleDragEnter = (e: React.DragEvent) => {
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(true)
   }
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
+    setIsDragging(true)
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
 
-    const files = e.dataTransfer.files
-    if (files && files.length > 0) {
-      handleUpload(files[0])
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0]
+      await processFile(file)
     }
   }
 
   const handleButtonClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0]
+      await processFile(file)
     }
   }
 
-  const handleClearImage = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+  const processFile = async (file: File) => {
+    try {
+      setUploading(true)
+      setError(null)
+
+      // Check if the file is an image
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file')
+        setUploading(false)
+        return
+      }
+
+      // Process the file (convert to PNG and resize if needed)
+      const processedFile = await convertToValidPNG(file)
+
+      // Pass the processed file to the parent component
+      onFileUpload(processedFile)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError('Error processing file')
+      }
+    } finally {
+      setUploading(false)
     }
-    onFileSelected(null)
-    setError(null)
   }
 
   return (
@@ -199,111 +181,64 @@ export default function ImageUpload({
       <input
         type='file'
         accept='image/*'
-        onChange={handleFileSelect}
         ref={fileInputRef}
+        onChange={handleFileChange}
         style={{ display: 'none' }}
       />
 
       {error && (
-        <Typography color='error' variant='body2' sx={{ mb: 2 }}>
+        <Typography color='error' sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
 
-      {imagePreview ? (
-        <Box sx={{ position: 'relative', width: '100%', mt: 2 }}>
-          <Box
-            sx={{
-              position: 'relative',
-              width: '100%',
-              height: 300,
-              borderRadius: 1,
-              overflow: 'hidden',
-              boxShadow: 1,
-            }}
-          >
-            <img
-              src={imagePreview}
-              alt='Uploaded preview'
-              style={{ objectFit: 'contain', width: '100%', height: '100%' }}
-            />
-          </Box>
-
-          <Box
-            sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 2 }}
-          >
-            <Button
-              variant='outlined'
-              color='primary'
-              startIcon={<CloudUploadIcon />}
-              onClick={handleButtonClick}
-            >
-              Change Image
+      <Box
+        sx={{
+          border: '2px dashed',
+          borderColor: isDragging ? 'primary.main' : 'divider',
+          borderRadius: 2,
+          p: 4,
+          textAlign: 'center',
+          backgroundColor: isDragging
+            ? 'rgba(77, 124, 138, 0.08)'
+            : 'transparent',
+          transition: 'background-color 0.3s, border-color 0.3s',
+          cursor: 'pointer',
+          minHeight: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onClick={handleButtonClick}
+      >
+        {uploading ? (
+          <CircularProgress />
+        ) : (
+          <>
+            <CloudUploadIcon color='primary' sx={{ fontSize: 48, mb: 2 }} />
+            <Typography variant='h6' gutterBottom>
+              Drag & Drop your image here
+            </Typography>
+            <Typography variant='body2' color='text.secondary' gutterBottom>
+              or
+            </Typography>
+            <Button variant='contained' color='primary' component='span'>
+              Browse Files
             </Button>
-
-            <Button
-              variant='outlined'
-              color='error'
-              startIcon={<DeleteIcon />}
-              onClick={handleClearImage}
-            >
-              Remove
-            </Button>
-          </Box>
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            border: '2px dashed',
-            borderColor: isDragging ? 'primary.main' : 'divider',
-            borderRadius: 2,
-            p: 4,
-            textAlign: 'center',
-            backgroundColor: isDragging
-              ? 'rgba(77, 124, 138, 0.08)'
-              : 'transparent',
-            transition: 'background-color 0.3s, border-color 0.3s',
-            cursor: 'pointer',
-            minHeight: 200,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onClick={handleButtonClick}
-        >
-          {uploading ? (
-            <CircularProgress />
-          ) : (
-            <>
-              <CloudUploadIcon color='primary' sx={{ fontSize: 48, mb: 2 }} />
-              <Typography variant='h6' gutterBottom>
-                Drag & Drop your image here
-              </Typography>
-              <Typography variant='body2' color='text.secondary' gutterBottom>
-                or
-              </Typography>
-              <Button variant='contained' color='primary' component='span'>
-                Browse Files
-              </Button>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mt: 2 }}
-              >
-                Supported formats: JPEG, PNG, WebP (will be converted to PNG)
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                Maximum size: 5MB
-              </Typography>
-            </>
-          )}
-        </Box>
-      )}
+            <Typography variant='caption' color='text.secondary' sx={{ mt: 2 }}>
+              Supported formats: JPEG, PNG, WebP (will be converted to PNG)
+            </Typography>
+            <Typography variant='caption' color='text.secondary'>
+              Maximum size: 5MB
+            </Typography>
+          </>
+        )}
+      </Box>
     </Box>
   )
 }

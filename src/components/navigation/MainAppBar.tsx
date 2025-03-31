@@ -17,10 +17,35 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
+
+// Mock implementation of Supabase
+const supabase = {
+  auth: {
+    getSession: async () => ({ data: { session: null } }),
+    onAuthStateChange: async (
+      callback: (event: string, session: Record<string, unknown>) => void,
+    ) => {
+      callback('SIGNED_IN', { user: { id: 'mock-user-id' } })
+      return { data: { subscription: { unsubscribe: () => {} } } }
+    },
+    signOut: async () => {},
+  },
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: async () => ({ data: null, error: null }),
+      }),
+    }),
+    insert: () => ({
+      select: () => ({
+        single: async () => ({ data: null, error: null }),
+      }),
+    }),
+  }),
+}
 
 export default function MainAppBar() {
   const router = useRouter()
@@ -29,7 +54,6 @@ export default function MainAppBar() {
   // TEMPORARILY DISABLED AUTH: Set isAuthenticated to false by default
   const [_isAuthenticated, setIsAuthenticated] = useState(false)
   const [_userAvatar, setUserAvatar] = useState<string | null>(null)
-  const supabase = createClientComponentClient()
 
   // TEMPORARILY DISABLED AUTH: Comment out authentication check
   // useEffect(() => {
