@@ -7,8 +7,9 @@ import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
 import { useApp } from '@/contexts/AppContext'
 import { UserProfile } from '@/lib/supabase'
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
-import SaveAltIcon from '@mui/icons-material/SaveAlt'
+import { generateImage } from '@/utils/api/imageGeneration'
+import AutoFixHighRoundedIcon from '@mui/icons-material/AutoFixHighRounded'
+import SaveAltRoundedIcon from '@mui/icons-material/SaveAltRounded'
 import {
   Alert,
   Box,
@@ -21,12 +22,11 @@ import {
   MenuItem,
   Paper,
   Select,
-  SelectChangeEvent,
   TextField,
   Typography,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import React from 'react'
 
 // AI providers
 const aiProviders = [
@@ -63,21 +63,26 @@ export default function Dashboard() {
   const { user: _contextUser, isAuthLoading: _isAuthLoading } = useApp()
 
   // TEMPORARILY DISABLED AUTH: Set defaults without requiring authentication
-  const [_user, _setUser] = useState<UserProfile | null>(null)
-  const [profile, _setProfile] = useState<UserProfile | null>(null)
-  const [_loading, _setLoading] = useState(false) // Changed to false to skip loading state
-  const [generating, setGenerating] = useState(false)
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null)
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
+  const [_user, _setUser] = React.useState<UserProfile | null>(null)
+  const [profile, _setProfile] = React.useState<UserProfile | null>(null)
+  const [_loading, _setLoading] = React.useState(false) // Changed to false to skip loading state
+  const [generating, setGenerating] = React.useState(false)
+  const [uploadedImage, setUploadedImage] = React.useState<File | null>(null)
+  const [uploadedImageUrl, setUploadedImageUrl] = React.useState<string | null>(
     null,
   )
-  const [selectedProvider, setSelectedProvider] = useState('openai')
-  const [providerKeys, setProviderKeys] = useState<Record<string, string>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [showProviderKeyModal, setShowProviderKeyModal] = useState(false)
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
-  const [prompt, setPrompt] = useState<string>('')
+  const [generatedImageUrl, setGeneratedImageUrl] = React.useState<
+    string | null
+  >(null)
+  const [selectedProvider, setSelectedProvider] = React.useState('openai')
+  const [providerKeys, setProviderKeys] = React.useState<
+    Record<string, string>
+  >({})
+  const [error, setError] = React.useState<string | null>(null)
+  const [showProviderKeyModal, setShowProviderKeyModal] = React.useState(false)
+  const [showSubscriptionModal, setShowSubscriptionModal] =
+    React.useState(false)
+  const [prompt, setPrompt] = React.useState<string>('')
 
   const handleFileUpload = (file: File | null) => {
     if (file) {
@@ -93,7 +98,7 @@ export default function Dashboard() {
     }
   }
 
-  const handleProviderChange = (event: SelectChangeEvent<string>) => {
+  const handleProviderChange = (event: any) => {
     const newProvider = event.target.value
     // Only allow changing to enabled providers
     const provider = aiProviders.find(p => p.id === newProvider)
@@ -127,79 +132,33 @@ export default function Dashboard() {
     }
 
     setGenerating(true)
-    setGeneratedImageUrl(null)
     setError(null)
+    setGeneratedImageUrl(null)
 
     try {
-      // Create a FormData object to send the image
-      const formData = new FormData()
-      formData.append('image', uploadedImage)
-      formData.append('provider', selectedProvider)
-      formData.append(
-        'prompt',
-        'Transform this image into Studio Ghibli style: ' + (prompt || ''),
-      )
-
-      // Add API key if available
-      if (providerKeys && providerKeys[selectedProvider]) {
-        formData.append('apiKey', providerKeys[selectedProvider])
-      }
-
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        body: formData,
+      const imageGenerationResult = await generateImage({
+        image: uploadedImage,
+        prompt:
+          'Transform this image into Studio Ghibli style: ' + (prompt || ''),
+        provider: selectedProvider,
+        apiKey: providerKeys?.[selectedProvider],
       })
 
-      if (!response.ok) {
-        try {
-          // Try to parse as JSON first
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to generate image')
-        } catch (jsonError) {
-          // If JSON parsing fails, it's likely an HTML response (like "Request Entity Too Large")
-          // Get the response again since we already consumed it
-          const textResponse = await fetch('/api/generate', {
-            method: 'POST',
-            body: formData,
-          })
-          const errorText = await textResponse.text()
-
-          if (errorText.includes('Request Entity Too Large')) {
-            throw new Error(
-              'Image file is too large. Please use a smaller image (under 5MB).',
-            )
-          } else if (
-            response.status === 504 ||
-            errorText.includes('504') ||
-            errorText.includes('Gateway Timeout')
-          ) {
-            throw new Error(
-              'Server timeout error. Vercel free tier has a 10-second function limit which is often not enough for AI image generation. Try using a simpler image or consider upgrading to a paid plan for longer execution times.',
-            )
-          } else {
-            // Log the error for debugging
-            // eslint-disable-next-line no-console
-            console.error('Server error details:', {
-              status: response.status,
-              statusText: response.statusText,
-              errorTextSample: errorText.substring(0, 500), // First 500 chars for debugging
-            })
-            throw new Error(
-              `Server error: ${response.status}. Please try a smaller image or a different format.`,
-            )
-          }
-        }
+      if (!imageGenerationResult.success || !imageGenerationResult.imageUrl) {
+        throw new Error(
+          imageGenerationResult.error || 'Failed to generate image',
+        )
       }
 
-      const data = await response.json()
-      setGeneratedImageUrl(data.imageUrl)
+      setGeneratedImageUrl(imageGenerationResult.imageUrl)
+      setGenerating(false)
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : 'Failed to generate image',
-      )
-      // eslint-disable-next-line no-console
       console.error('Error generating image:', error)
-    } finally {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while generating the image',
+      )
       setGenerating(false)
     }
   }
@@ -224,7 +183,6 @@ export default function Dashboard() {
           document.body.removeChild(link)
         }, 100)
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('Download error:', error)
         setError('Failed to download image. Please try again.')
       }
@@ -331,7 +289,9 @@ export default function Dashboard() {
                     label='Custom Prompt'
                     placeholder='Add details to your Ghibli transformation'
                     value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setPrompt(e.target.value)
+                    }
                     fullWidth
                     multiline
                     rows={2}
@@ -344,7 +304,7 @@ export default function Dashboard() {
                   color='primary'
                   fullWidth
                   size='large'
-                  startIcon={<AutoFixHighIcon />}
+                  startIcon={<AutoFixHighRoundedIcon />}
                   onClick={handleGenerateImage}
                   disabled={!uploadedImage || generating}
                   sx={{
@@ -412,7 +372,7 @@ export default function Dashboard() {
                     variant='outlined'
                     color='primary'
                     fullWidth
-                    startIcon={<SaveAltIcon />}
+                    startIcon={<SaveAltRoundedIcon />}
                     onClick={handleDownloadImage}
                     sx={{ mt: 'auto' }}
                   >
