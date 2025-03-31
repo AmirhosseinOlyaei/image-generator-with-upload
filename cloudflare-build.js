@@ -37,13 +37,6 @@ execSync(`cp -R public/* ${deployDir}/`, {
 const routes = [
   { path: 'index.html', title: 'Ghibli Vision - Transform Your Photos' },
   { path: 'dashboard/index.html', title: 'Dashboard - Ghibli Vision' },
-  { path: 'auth/signin/index.html', title: 'Sign In - Ghibli Vision' },
-  { path: 'auth/signup/index.html', title: 'Sign Up - Ghibli Vision' },
-  { path: 'profile/index.html', title: 'Profile - Ghibli Vision' },
-  { path: 'pricing/index.html', title: 'Pricing - Ghibli Vision' },
-  { path: 'terms/index.html', title: 'Terms - Ghibli Vision' },
-  { path: 'privacy/index.html', title: 'Privacy - Ghibli Vision' },
-  { path: 'cookies/index.html', title: 'Cookies - Ghibli Vision' },
 ]
 
 console.log('📝 Creating HTML files...')

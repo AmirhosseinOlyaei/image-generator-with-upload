@@ -3,8 +3,8 @@
 
 # Set build output directory
 [build]
-output_directory = ".cloudflare/deploy"
 command = "node cloudflare-build.js"
+output_directory = ".cloudflare/deploy"
 
 # Configure compatibility date
 compatibility_date = "2024-03-31"
