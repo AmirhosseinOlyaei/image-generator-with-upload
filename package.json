@@ -15,7 +15,7 @@
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
     "cloudflare:build": "node cloudflare-build.js",
-    "cloudflare:deploy": "pnpm cloudflare:build && wrangler pages deploy .vercel/output/static"
+    "cloudflare:deploy": "pnpm cloudflare:build && wrangler pages deploy out"
   },
   "keywords": [
     "ghibli",
