@@ -131,7 +131,6 @@ export default function Pricing() {
     getUser()
   }, [])
 
-  // eslint-disable-next-line no-unused-vars
   const handleSubscribe = (_planId: string) => {
     // _planId would be used to identify the selected plan in a real implementation
 

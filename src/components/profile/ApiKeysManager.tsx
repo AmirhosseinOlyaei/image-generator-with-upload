@@ -172,7 +172,10 @@ export default function ApiKeysManager() {
         type: 'success',
       })
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to save ${providerId} API key`
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : `Failed to save ${providerId} API key`
       setErrors(prev => ({
         ...prev,
         [providerId]: errorMessage,
@@ -218,7 +221,10 @@ export default function ApiKeysManager() {
         type: 'info',
       })
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to remove ${providerId} API key`
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : `Failed to remove ${providerId} API key`
       setErrors(prev => ({
         ...prev,
         [providerId]: errorMessage,

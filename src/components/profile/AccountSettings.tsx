@@ -64,7 +64,10 @@ export default function AccountSettings() {
         throw new Error('Failed to update profile')
       }
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred while updating profile'
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while updating profile'
       setError(errorMessage)
       addNotification({
         message: errorMessage,
@@ -98,9 +101,7 @@ export default function AccountSettings() {
   const getSubscriptionDisplay = () => {
     if (!profile.plan) return 'Free Plan'
     return (
-      profile.plan.charAt(0).toUpperCase() +
-      profile.plan.slice(1) +
-      ' Plan'
+      profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1) + ' Plan'
     )
   }
 

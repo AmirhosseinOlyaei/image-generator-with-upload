@@ -1,11 +1,11 @@
 'use client'
 
-import MenuIcon from '@mui/icons-material/Menu'
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import LogoutIcon from '@mui/icons-material/Logout'
 import LoginIcon from '@mui/icons-material/Login'
+import LogoutIcon from '@mui/icons-material/Logout'
+import MenuIcon from '@mui/icons-material/Menu'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import {
   AppBar,
@@ -26,15 +26,17 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import React, { useEffect, useState } from 'react'
 
 export default function MainAppBar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [anchorEl, setAnchorEl] = useState<React.MouseEvent['currentTarget'] | null>(null)
+  const [anchorEl, setAnchorEl] = useState<
+    React.MouseEvent['currentTarget'] | null
+  >(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const supabase = createClientComponentClient()
@@ -47,45 +49,45 @@ export default function MainAppBar() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-        
+        .single()
+
       // If profile doesn't exist, skip creation (we'll let useAuth handle it)
       if (error && error.code === 'PGRST116') {
         // Simply return null without attempting to create a profile here
-        return null;
+        return null
       } else if (error) {
         // Log other errors but don't throw
         // eslint-disable-next-line no-console
-        console.error('Error fetching profile:', error);
-        return null;
+        console.error('Error fetching profile:', error)
+        return null
       }
-      
-      return data?.avatar_url || null;
+
+      return data?.avatar_url || null
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Error in profile operation:', err);
-      return null;
+      console.error('Error in profile operation:', err)
+      return null
     }
-  };
+  }
 
   // Check authentication status directly from Supabase
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const { data, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           throw error
         }
-        
+
         const isLoggedIn = !!data.session
         setIsAuthenticated(isLoggedIn)
-        
+
         // Get user avatar if authenticated
         if (isLoggedIn && data.session) {
-          const avatarUrl = await safelyFetchProfile(data.session.user.id);
+          const avatarUrl = await safelyFetchProfile(data.session.user.id)
           if (avatarUrl) {
-            setUserAvatar(avatarUrl);
+            setUserAvatar(avatarUrl)
           }
         }
       } catch (error) {
@@ -96,27 +98,29 @@ export default function MainAppBar() {
     }
 
     checkAuthStatus()
-    
+
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true)
-        
+
         // Get user avatar if available
         if (session) {
-          (async () => {
-            const avatarUrl = await safelyFetchProfile(session.user.id);
+          ;(async () => {
+            const avatarUrl = await safelyFetchProfile(session.user.id)
             if (avatarUrl) {
-              setUserAvatar(avatarUrl);
+              setUserAvatar(avatarUrl)
             }
-          })();
+          })()
         }
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false)
         setUserAvatar(null)
       }
     })
-    
+
     // Cleanup subscription
     return () => {
       subscription.unsubscribe()
@@ -180,17 +184,17 @@ export default function MainAppBar() {
       </Box>
       <Divider />
       <List sx={{ py: 2 }}>
-        {navItems.map((item) => (
+        {navItems.map(item => (
           <ListItem key={item.name} disablePadding>
             <ListItemButton
               component={Link}
               href={item.path}
-              sx={{ 
+              sx={{
                 textAlign: 'center',
                 py: 1.5,
                 '&:hover': {
                   bgcolor: 'rgba(0, 0, 0, 0.04)',
-                }
+                },
               }}
             >
               <ListItemText primary={item.name} />
@@ -203,16 +207,16 @@ export default function MainAppBar() {
             <ListItem disablePadding>
               <ListItemButton
                 onClick={() => handleNavigation('/dashboard')}
-                sx={{ 
+                sx={{
                   textAlign: 'left',
                   py: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  }
+                  },
                 }}
               >
                 <ListItemIcon>
-                  <DashboardIcon color="primary" />
+                  <DashboardIcon color='primary' />
                 </ListItemIcon>
                 <ListItemText primary='Studio' />
               </ListItemButton>
@@ -220,16 +224,16 @@ export default function MainAppBar() {
             <ListItem disablePadding>
               <ListItemButton
                 onClick={() => handleNavigation('/profile')}
-                sx={{ 
+                sx={{
                   textAlign: 'left',
                   py: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  }
+                  },
                 }}
               >
                 <ListItemIcon>
-                  <AccountCircleIcon color="primary" />
+                  <AccountCircleIcon color='primary' />
                 </ListItemIcon>
                 <ListItemText primary='Profile' />
               </ListItemButton>
@@ -237,16 +241,16 @@ export default function MainAppBar() {
             <ListItem disablePadding>
               <ListItemButton
                 onClick={handleLogout}
-                sx={{ 
+                sx={{
                   textAlign: 'left',
                   py: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  }
+                  },
                 }}
               >
                 <ListItemIcon>
-                  <LogoutIcon color="error" />
+                  <LogoutIcon color='error' />
                 </ListItemIcon>
                 <ListItemText primary='Logout' />
               </ListItemButton>
@@ -257,16 +261,16 @@ export default function MainAppBar() {
             <ListItem disablePadding>
               <ListItemButton
                 onClick={() => handleNavigation('/auth/signin')}
-                sx={{ 
+                sx={{
                   textAlign: 'left',
                   py: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  }
+                  },
                 }}
               >
                 <ListItemIcon>
-                  <LoginIcon color="primary" />
+                  <LoginIcon color='primary' />
                 </ListItemIcon>
                 <ListItemText primary='Sign In' />
               </ListItemButton>
@@ -274,16 +278,16 @@ export default function MainAppBar() {
             <ListItem disablePadding>
               <ListItemButton
                 onClick={() => handleNavigation('/auth/signup')}
-                sx={{ 
+                sx={{
                   textAlign: 'left',
                   py: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  }
+                  },
                 }}
               >
                 <ListItemIcon>
-                  <PersonAddIcon color="secondary" />
+                  <PersonAddIcon color='secondary' />
                 </ListItemIcon>
                 <ListItemText primary='Sign Up' />
               </ListItemButton>
@@ -296,11 +300,11 @@ export default function MainAppBar() {
 
   return (
     <>
-      <AppBar 
-        position='static' 
-        color='default' 
+      <AppBar
+        position='static'
+        color='default'
         elevation={0}
-        sx={{ 
+        sx={{
           borderBottom: '1px solid',
           borderColor: 'divider',
           bgcolor: 'background.paper',
@@ -320,17 +324,17 @@ export default function MainAppBar() {
             </IconButton>
 
             {/* Logo */}
-            <Box 
-              component={Link} 
-              href="/"
-              sx={{ 
-                display: 'flex', 
+            <Box
+              component={Link}
+              href='/'
+              sx={{
+                display: 'flex',
                 alignItems: 'center',
                 textDecoration: 'none',
                 color: 'inherit',
                 '&:hover': {
                   textDecoration: 'none',
-                }
+                },
               }}
             >
               <AutoFixHighIcon
@@ -358,7 +362,7 @@ export default function MainAppBar() {
 
             {/* Desktop navigation */}
             <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' } }}>
-              {navItems.map((item) => (
+              {navItems.map(item => (
                 <Button
                   key={item.name}
                   component={Link}
@@ -414,19 +418,19 @@ export default function MainAppBar() {
                     aria-label='account of current user'
                     aria-haspopup='true'
                     color='inherit'
-                    sx={{ 
+                    sx={{
                       ml: 1,
                       border: '2px solid',
                       borderColor: 'primary.light',
                       '&:hover': {
                         backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      }
+                      },
                     }}
                   >
                     {userAvatar ? (
-                      <Avatar 
-                        src={userAvatar} 
-                        alt="User avatar"
+                      <Avatar
+                        src={userAvatar}
+                        alt='User avatar'
                         sx={{ width: 32, height: 32 }}
                       />
                     ) : (
@@ -471,44 +475,44 @@ export default function MainAppBar() {
                   >
                     <MenuItem
                       onClick={() => handleNavigation('/profile')}
-                      sx={{ 
+                      sx={{
                         py: 1.5,
                         '&:hover': {
                           bgcolor: 'rgba(0, 0, 0, 0.04)',
-                        }
+                        },
                       }}
                     >
                       <ListItemIcon>
-                        <AccountCircleIcon fontSize="small" color="primary" />
+                        <AccountCircleIcon fontSize='small' color='primary' />
                       </ListItemIcon>
                       Profile
                     </MenuItem>
                     <MenuItem
                       onClick={() => handleNavigation('/dashboard')}
-                      sx={{ 
+                      sx={{
                         py: 1.5,
                         '&:hover': {
                           bgcolor: 'rgba(0, 0, 0, 0.04)',
-                        }
+                        },
                       }}
                     >
                       <ListItemIcon>
-                        <DashboardIcon fontSize="small" color="primary" />
+                        <DashboardIcon fontSize='small' color='primary' />
                       </ListItemIcon>
                       Studio
                     </MenuItem>
                     <Divider />
-                    <MenuItem 
+                    <MenuItem
                       onClick={handleLogout}
-                      sx={{ 
+                      sx={{
                         py: 1.5,
                         '&:hover': {
                           bgcolor: 'rgba(0, 0, 0, 0.04)',
-                        }
+                        },
                       }}
                     >
                       <ListItemIcon>
-                        <LogoutIcon fontSize="small" color="error" />
+                        <LogoutIcon fontSize='small' color='error' />
                       </ListItemIcon>
                       Sign Out
                     </MenuItem>
@@ -519,12 +523,12 @@ export default function MainAppBar() {
                   <Button
                     component={Link}
                     href='/auth/signin'
-                    sx={{ 
-                      color: 'text.primary', 
+                    sx={{
+                      color: 'text.primary',
                       mr: 1,
                       '&:hover': {
                         backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      }
+                      },
                     }}
                     startIcon={<LoginIcon />}
                   >

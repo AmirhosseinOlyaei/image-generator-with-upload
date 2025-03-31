@@ -1,34 +1,37 @@
 import js from '@eslint/js'
 import nextjs from '@next/eslint-plugin-next'
-import typescript from '@typescript-eslint/eslint-plugin'
-import tsParser from '@typescript-eslint/parser'
+import * as tseslint from 'typescript-eslint'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import prettier from 'eslint-plugin-prettier'
 
 export default [
-  js.configs.recommended,
   {
     ignores: [
-      '.next/**',
-      'node_modules/**',
-      'out/**',
-      'dist/**',
-      'build/**',
-      '**/.next/**',
-      '**/node_modules/**',
-      '**/out/**',
-      '**/dist/**',
-      '**/build/**',
-      'next-env.d.ts',
+      '.next/**/*',
+      'node_modules/**/*',
+      'out/**/*',
+      'dist/**/*',
+      'build/**/*',
+      'public/**/*',
+      '*.d.ts',
     ],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
     files: ['**/*.{ts,tsx,js,jsx}'],
     plugins: {
-      '@typescript-eslint': typescript,
       '@next/next': nextjs,
+      react,
+      'react-hooks': reactHooks,
+      prettier: prettier,
     },
     languageOptions: {
-      parser: tsParser,
+      parser: tseslint.parser,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
         ecmaFeatures: {
           jsx: true,
         },
@@ -67,7 +70,11 @@ export default [
       },
     },
     rules: {
-      'react/no-unescaped-entities': 'off',
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      'prettier/prettier': 'error',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'warn',
@@ -81,6 +88,11 @@ export default [
       'no-control-regex': 'off',
       'no-self-assign': 'off',
       'no-sparse-arrays': 'off',
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
   },
 ]

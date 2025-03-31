@@ -4,10 +4,16 @@ import GhibliShowcase from '@/components/landing/GhibliShowcase'
 import HowItWorks from '@/components/landing/HowItWorks'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
-import { Box, Button, Container, Typography, CircularProgress } from '@mui/material'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Typography,
+} from '@mui/material'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function Home() {
   const router = useRouter()
@@ -21,11 +27,11 @@ export default function Home() {
       try {
         setIsCheckingAuth(true)
         const { data, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           throw error
         }
-        
+
         setIsAuthenticated(!!data.session)
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -37,16 +43,18 @@ export default function Home() {
     }
 
     checkAuthStatus()
-    
+
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(event => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true)
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false)
       }
     })
-    
+
     // Cleanup subscription
     return () => {
       subscription.unsubscribe()
@@ -124,9 +132,11 @@ export default function Home() {
               }}
             >
               {isCheckingAuth ? (
-                <CircularProgress size={24} color="inherit" />
+                <CircularProgress size={24} color='inherit' />
+              ) : isAuthenticated ? (
+                'Go to Dashboard'
               ) : (
-                isAuthenticated ? 'Go to Dashboard' : 'Get Started Now'
+                'Get Started Now'
               )}
             </Button>
           </Container>

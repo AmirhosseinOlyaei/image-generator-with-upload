@@ -3,7 +3,6 @@
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
 import { supabase, UserProfile } from '@/lib/supabase'
-import { User } from '@supabase/supabase-js'
 import ApiIcon from '@mui/icons-material/Api'
 import CancelIcon from '@mui/icons-material/Cancel'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -33,6 +32,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -79,7 +79,11 @@ export default function Profile() {
           }
         }
       } catch (error) {
-        setError(error instanceof Error ? error.message : 'An error occurred while fetching user data')
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'An error occurred while fetching user data',
+        )
       } finally {
         setLoading(false)
       }
@@ -111,7 +115,7 @@ export default function Profile() {
         .from('profiles')
         .update({
           full_name: fullName,
-          provider_keys: { openai: providerKey }
+          provider_keys: { openai: providerKey },
         })
         .eq('id', user.id)
 
@@ -124,17 +128,21 @@ export default function Profile() {
         setProfile({
           ...profile,
           full_name: fullName,
-          provider_keys: { 
+          provider_keys: {
             ...profile.provider_keys,
-            openai: providerKey 
-          }
+            openai: providerKey,
+          },
         })
       }
 
       setSuccess('Profile updated successfully')
       setEditing(false)
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred while updating profile')
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while updating profile',
+      )
     } finally {
       setSaving(false)
     }
@@ -157,7 +165,7 @@ export default function Profile() {
       if (!user?.email) {
         throw new Error('Email is required to reset password')
       }
-      
+
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
@@ -168,7 +176,11 @@ export default function Profile() {
 
       setSuccess('Password reset email sent to your email address')
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to send password reset email')
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to send password reset email',
+      )
     }
   }
 
@@ -183,7 +195,7 @@ export default function Profile() {
 
       // Delete user from Supabase Auth
       const { error: deleteError } = await supabase.auth.admin.deleteUser(
-        user.id
+        user.id,
       )
 
       if (deleteError) {
@@ -192,7 +204,9 @@ export default function Profile() {
 
       router.push('/')
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to delete account')
+      setError(
+        error instanceof Error ? error.message : 'Failed to delete account',
+      )
       setSaving(false)
     }
   }
@@ -207,7 +221,9 @@ export default function Profile() {
       }
 
       // Now we know user.email is defined
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email as string)
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        user.email as string,
+      )
 
       if (error) {
         throw error
@@ -215,7 +231,11 @@ export default function Profile() {
 
       setSuccess('Password reset email sent to your email address')
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to send password reset email')
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to send password reset email',
+      )
     }
   }
 
@@ -328,22 +348,12 @@ export default function Profile() {
                   <ListItemText
                     primary='Free Image'
                     secondary={
-                      (profile?.credits ?? 0) > 0
-                        ? 'Available'
-                        : 'Used'
+                      (profile?.credits ?? 0) > 0 ? 'Available' : 'Used'
                     }
                   />
                   <Chip
-                    label={
-                      (profile?.credits ?? 0) > 0
-                        ? 'Available'
-                        : 'Used'
-                    }
-                    color={
-                      (profile?.credits ?? 0) > 0
-                        ? 'success'
-                        : 'default'
-                    }
+                    label={(profile?.credits ?? 0) > 0 ? 'Available' : 'Used'}
+                    color={(profile?.credits ?? 0) > 0 ? 'success' : 'default'}
                     size='small'
                   />
                 </ListItem>
