@@ -13,9 +13,11 @@ interface AIProviderResponse {
  * Call the OpenAI DALL-E API to generate a Ghibli-style image
  */
 export const generateWithOpenAI = async (
-  imageFile: File,
-  prompt: string,
-  apiKey?: string,
+  /* eslint-disable no-unused-vars */
+  _imageFile: File,
+  _prompt: string,
+  _apiKey?: string,
+  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, we would:
@@ -30,11 +32,11 @@ export const generateWithOpenAI = async (
       success: true,
       imageUrl: '/images/generated-placeholder.jpg',
     }
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       imageUrl: '',
-      error: error.message || 'Failed to generate image with OpenAI',
+      error: error instanceof Error ? error.message : 'Failed to generate image with OpenAI',
     }
   }
 }
@@ -43,9 +45,11 @@ export const generateWithOpenAI = async (
  * Call the Stability AI API to generate a Ghibli-style image
  */
 export const generateWithStabilityAI = async (
-  imageFile: File,
-  prompt: string,
-  apiKey?: string,
+  /* eslint-disable no-unused-vars */
+  _imageFile: File,
+  _prompt: string,
+  _apiKey?: string,
+  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, similar to OpenAI function above
@@ -57,11 +61,11 @@ export const generateWithStabilityAI = async (
       success: true,
       imageUrl: '/images/generated-placeholder.jpg',
     }
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       imageUrl: '',
-      error: error.message || 'Failed to generate image with Stability AI',
+      error: error instanceof Error ? error.message : 'Failed to generate image with Stability AI',
     }
   }
 }
@@ -70,9 +74,11 @@ export const generateWithStabilityAI = async (
  * Call the Midjourney API to generate a Ghibli-style image
  */
 export const generateWithMidjourney = async (
-  imageFile: File,
-  prompt: string,
-  apiKey?: string,
+  /* eslint-disable no-unused-vars */
+  _imageFile: File,
+  _prompt: string,
+  _apiKey?: string,
+  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, would use a third-party API for Midjourney
@@ -84,11 +90,11 @@ export const generateWithMidjourney = async (
       success: true,
       imageUrl: '/images/generated-placeholder.jpg',
     }
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       imageUrl: '',
-      error: error.message || 'Failed to generate image with Midjourney',
+      error: error instanceof Error ? error.message : 'Failed to generate image with Midjourney',
     }
   }
 }
@@ -97,9 +103,11 @@ export const generateWithMidjourney = async (
  * Call the Leonardo AI API to generate a Ghibli-style image
  */
 export const generateWithLeonardoAI = async (
-  imageFile: File,
-  prompt: string,
-  apiKey?: string,
+  /* eslint-disable no-unused-vars */
+  _imageFile: File,
+  _prompt: string,
+  _apiKey?: string,
+  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, would call Leonardo AI's API
@@ -111,11 +119,11 @@ export const generateWithLeonardoAI = async (
       success: true,
       imageUrl: '/images/generated-placeholder.jpg',
     }
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       imageUrl: '',
-      error: error.message || 'Failed to generate image with Leonardo AI',
+      error: error instanceof Error ? error.message : 'Failed to generate image with Leonardo AI',
     }
   }
 }
@@ -142,7 +150,7 @@ export const generateImage = async (
       return {
         success: false,
         imageUrl: '',
-        error: 'Invalid AI provider',
+        error: `Unsupported provider: ${provider}`,
       }
   }
 }
