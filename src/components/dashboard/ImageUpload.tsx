@@ -44,10 +44,10 @@ export default function ImageUpload({
             return
           }
 
-          // Check if the blob size is less than 10MB
-          if (blob.size > 10 * 1024 * 1024) {
-            // If larger than 10MB, resize the image
-            const scaleFactor = Math.sqrt((10 * 1024 * 1024) / blob.size)
+          // Check if the blob size is less than 5MB
+          if (blob.size > 5 * 1024 * 1024) {
+            // If larger than 5MB, resize the image
+            const scaleFactor = Math.sqrt((5 * 1024 * 1024) / blob.size)
             const newWidth = Math.floor(img.width * scaleFactor)
             const newHeight = Math.floor(img.height * scaleFactor)
 
@@ -85,7 +85,7 @@ export default function ImageUpload({
               resolve(pngFile)
             }, 'image/png')
           } else {
-            // If less than 10MB, use the original size
+            // If less than 5MB, use the original size
             const pngFile = new File(
               [blob],
               file.name.replace(/\.[^/.]+$/, '') + '.png',
@@ -136,7 +136,7 @@ export default function ImageUpload({
     setError(null)
 
     try {
-      // Convert the image to a valid PNG format and ensure it's under 10MB
+      // Convert the image to a valid PNG format and ensure it's under 5MB
       const processedFile = await convertToValidPNG(file)
 
       // Pass the processed file to the parent component
@@ -298,7 +298,7 @@ export default function ImageUpload({
                 Supported formats: JPEG, PNG, WebP (will be converted to PNG)
               </Typography>
               <Typography variant='caption' color='text.secondary'>
-                Maximum size: 10MB
+                Maximum size: 5MB
               </Typography>
             </>
           )}

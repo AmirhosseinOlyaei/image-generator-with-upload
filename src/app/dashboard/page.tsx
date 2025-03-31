@@ -11,12 +11,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import {
   Alert,
-  Backdrop,
   Box,
   Button,
-  Card,
-  CardContent,
-  CardMedia,
   CircularProgress,
   Container,
   FormControl,
@@ -31,7 +27,7 @@ import {
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 // AI providers
 const aiProviders = [
@@ -254,7 +250,7 @@ export default function Dashboard() {
 
           if (errorText.includes('Request Entity Too Large')) {
             throw new Error(
-              'Image file is too large. Please use a smaller image (under 4MB).',
+              'Image file is too large. Please use a smaller image (under 5MB).',
             )
           } else {
             throw new Error(

@@ -88,11 +88,11 @@ async function callOpenAI(
     // Convert base64 to Buffer
     const imageBuffer = Buffer.from(base64Data, 'base64')
 
-    // Check file size (OpenAI limit is 10MB)
+    // Check file size (OpenAI limit is 10MB, but we're limiting to 5MB for Vercel)
     const fileSizeInMB = imageBuffer.length / (1024 * 1024)
-    if (fileSizeInMB > 10) {
+    if (fileSizeInMB > 5) {
       throw new Error(
-        'Image size exceeds 10MB limit. Please use a smaller image.',
+        'Image size exceeds 5MB limit. Please use a smaller image.',
       )
     }
 
