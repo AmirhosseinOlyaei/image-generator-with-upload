@@ -6,7 +6,7 @@ pages_build_output_dir = ".cloudflare/deploy"
 
 # Configure build settings
 [build]
-command = "node cloudflare-build.js"
+command = "./cloudflare-build-deploy.sh"
 output_directory = ".cloudflare/deploy"
 
 # For local development
