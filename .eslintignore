@@ -1,0 +1,18 @@
+# Build outputs
+.next/**
+out/**
+dist/**
+build/**
+
+# Dependencies
+node_modules/**
+
+# Generated types
+.next/types/**
+
+# Config files
+*.config.js
+next-env.d.ts
+
+# Cache
+.cache/**
