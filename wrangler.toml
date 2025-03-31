@@ -1,32 +1,14 @@
 name = "ghibli-vision"
 compatibility_date = "2024-03-31"
 
-# Enable Node.js compatibility
-compatibility_flags = ["nodejs_compat"]
-
-# Specify Node.js version
-[build.environment]
-NODE_VERSION = "20"
+# Pages configuration
+pages_build_output_dir = ".cloudflare/deploy"
 
 # Configure build settings
 [build]
 command = "node cloudflare-build.js"
 output_directory = ".cloudflare/deploy"
 
-# Pages configuration
-pages_build_output_dir = ".cloudflare/deploy"
-
 # For local development
 [dev]
 port = 8787
-
-# Add your environment variables here (for local development)
-# For production, you'll need to add these through the Cloudflare dashboard
-# or using the wrangler secret commands
-[vars]
-# OPENAI_API_KEY = ""
-# STABILITY_API_KEY = ""
-# MIDJOURNEY_API_KEY = ""
-# LEONARDO_API_KEY = ""
-# NEXT_PUBLIC_SUPABASE_URL = ""
-# NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
