@@ -69,8 +69,8 @@ export const useImageUpload = (options: UseImageUploadOptions = {}) => {
         try {
           processedFile = await resizeImage(file, maxWidth, maxHeight)
         } catch (error) {
-          console.warn('Error resizing image:', error)
-          // Continue with the original file if resizing fails
+          // Silent fail if resizing fails, continue with the original file
+          processedFile = file
         }
 
         // Create a preview URL
@@ -84,11 +84,12 @@ export const useImageUpload = (options: UseImageUploadOptions = {}) => {
         })
 
         return true
-      } catch (error: any) {
+      } catch (error: Error | unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to process image'
         setState({
           ...state,
           uploading: false,
-          error: error.message || 'Failed to process image',
+          error: errorMessage,
         })
         return false
       }

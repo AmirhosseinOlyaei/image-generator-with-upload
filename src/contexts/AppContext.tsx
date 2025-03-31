@@ -1,13 +1,16 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
+import type { User } from '@supabase/auth-helpers-nextjs'
+import type { UserProfile } from '@/lib/supabase'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import React, {
   createContext,
   ReactNode,
   useContext,
   useEffect,
-  useState,
+  useReducer,
+  useRef,
 } from 'react'
 
 // Define the shape of our app state
@@ -16,6 +19,8 @@ interface AppState {
   notifications: Notification[]
   providerKeys: ProviderKeys
   userPreferences: UserPreferences
+  isAuthenticated: boolean
+  isAuthLoading: boolean
 }
 
 // Define the shape of notifications
@@ -41,33 +46,65 @@ interface UserPreferences {
   recentPrompts: string[]
 }
 
+// Define type for AppAction
+type AppAction = 
+  | { type: 'UPDATE_AUTH_STATE'; isAuthenticated: boolean; isAuthLoading: boolean }
+  | { type: 'UPDATE_STATE'; [key: string]: unknown };
+
 // Define the shape of our context
 interface AppContextType extends AppState {
   toggleDarkMode: () => void
+  // eslint-disable-next-line no-unused-vars
   addNotification: (notification: Omit<Notification, 'id'>) => void
+  // eslint-disable-next-line no-unused-vars
   removeNotification: (id: string) => void
+  // eslint-disable-next-line no-unused-vars
   setProviderKey: (provider: keyof ProviderKeys, key: string) => void
+  // eslint-disable-next-line no-unused-vars
   removeProviderKey: (provider: keyof ProviderKeys) => void
+  // eslint-disable-next-line no-unused-vars
   getProviderKey: (provider: keyof ProviderKeys) => string | undefined
+  // eslint-disable-next-line no-unused-vars
   setUserPreference: <K extends keyof UserPreferences>(
+    // eslint-disable-next-line no-unused-vars
     key: K,
+    // eslint-disable-next-line no-unused-vars
     value: UserPreferences[K],
   ) => void
+  // eslint-disable-next-line no-unused-vars
   addRecentPrompt: (prompt: string) => void
+  user: User | null
+  profile: UserProfile | null
 }
 
 // Create the context with a default value
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
+// Define the reducer function
+const appReducer = (state: AppState, action: AppAction): AppState => {
+  switch (action.type) {
+    case 'UPDATE_AUTH_STATE':
+      return { 
+        ...state, 
+        isAuthenticated: action.isAuthenticated, 
+        isAuthLoading: action.isAuthLoading 
+      };
+    case 'UPDATE_STATE': {
+      // Destructure and omit 'type' from the updates
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+      const { type, ...updates } = action;
+      return { ...state, ...updates };
+    }
+    default:
+      return state;
+  }
+};
+
 // Provider component that wraps your app and makes the context available
 export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth()
-  const supabase = createClientComponentClient()
-
-  // Initialize state
-  const [state, setState] = useState<AppState>({
+  const initialState = {
     darkMode: false,
     notifications: [],
     providerKeys: {},
@@ -75,81 +112,272 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       defaultProvider: 'openai',
       recentPrompts: [],
     },
-  })
+    isAuthenticated: false,
+    isAuthLoading: false,
+  }
+
+  const [state, dispatch] = useReducer(appReducer, initialState)
+  const isMounted = useRef(false)
+  const { user, profile, loading: authLoading } = useAuth()
+  const supabase = createClientComponentClient()
+
+  // Check authentication status on initial load
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session) {
+          dispatch({
+            type: 'UPDATE_AUTH_STATE',
+            isAuthenticated: true,
+            isAuthLoading: false,
+          })
+        } else {
+          dispatch({
+            type: 'UPDATE_AUTH_STATE',
+            isAuthenticated: false,
+            isAuthLoading: false,
+          })
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error checking auth status:', error)
+        dispatch({
+          type: 'UPDATE_AUTH_STATE',
+          isAuthenticated: false,
+          isAuthLoading: false,
+        })
+      }
+    }
+    
+    checkAuth()
+  }, [supabase])
+
+  useEffect(() => {
+    isMounted.current = true
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isMounted.current) {
+      dispatch({
+        type: 'UPDATE_AUTH_STATE',
+        isAuthenticated: !!user,
+        isAuthLoading: authLoading,
+      })
+    }
+  }, [user, authLoading])
 
   // Load user preferences from localStorage on client-side
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Load dark mode setting
-      const savedDarkMode = localStorage.getItem('darkMode')
+      const savedDarkMode = window.localStorage.getItem('darkMode')
       if (savedDarkMode) {
-        setState(prev => ({ ...prev, darkMode: savedDarkMode === 'true' }))
+        dispatch({
+          type: 'UPDATE_STATE',
+          darkMode: savedDarkMode === 'true',
+        })
       } else {
         // Check if user prefers dark mode based on system preference
         const prefersDarkMode = window.matchMedia(
           '(prefers-color-scheme: dark)',
         ).matches
-        setState(prev => ({ ...prev, darkMode: prefersDarkMode }))
+        dispatch({
+          type: 'UPDATE_STATE',
+          darkMode: prefersDarkMode,
+        })
       }
 
       // Load user preferences
-      const savedPreferences = localStorage.getItem('userPreferences')
+      const savedPreferences = window.localStorage.getItem('userPreferences')
       if (savedPreferences) {
         try {
           const parsedPreferences = JSON.parse(savedPreferences)
-          setState(prev => ({
-            ...prev,
+          dispatch({
+            type: 'UPDATE_STATE',
             userPreferences: {
-              ...prev.userPreferences,
+              ...state.userPreferences,
               ...parsedPreferences,
             },
-          }))
+          })
         } catch (error) {
-          console.error('Failed to parse user preferences:', error)
+          // Silent error handling for preferences parsing
+          dispatch({
+            type: 'UPDATE_STATE',
+            userPreferences: {
+              defaultProvider: 'openai',
+              recentPrompts: [],
+            },
+          })
         }
       }
     }
   }, [])
 
+  // Set up auth state listener
+  useEffect(() => {
+    // Initial auth check
+    const checkAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          throw error;
+        }
+        
+        dispatch({
+          type: 'UPDATE_AUTH_STATE',
+          isAuthenticated: !!data.session,
+          isAuthLoading: false,
+        });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error checking auth status:', err)
+        dispatch({
+          type: 'UPDATE_AUTH_STATE',
+          isAuthenticated: false,
+          isAuthLoading: false,
+        });
+      }
+    };
+    
+    checkAuth();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          dispatch({
+            type: 'UPDATE_AUTH_STATE',
+            isAuthenticated: true,
+            isAuthLoading: false,
+          });
+        } else if (event === 'SIGNED_OUT') {
+          dispatch({
+            type: 'UPDATE_AUTH_STATE',
+            isAuthenticated: false,
+            isAuthLoading: false,
+          });
+          
+          // Clear provider keys when signed out
+          dispatch({
+            type: 'UPDATE_STATE',
+            providerKeys: {},
+          });
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
   // Load provider keys from Supabase
   useEffect(() => {
     const fetchProviderKeys = async () => {
-      if (user) {
-        const { data, error } = await supabase
-          .from('provider_keys')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-
-        if (error) {
-          console.error('Error fetching provider keys:', error)
-          return
+      try {
+        // Only try to fetch if user exists and is fully loaded
+        if (user && user.id) {
+          try {
+            // First check if the provider_keys table exists by getting tables list
+            const { error: tablesError } = await supabase
+              .from('provider_keys')
+              .select('count')
+              .limit(1);
+              
+            // If we get a specific error about the table not existing,
+            // we'll just use empty provider keys
+            if (tablesError && 'code' in tablesError && tablesError.code === '42P01') {
+              // Table doesn't exist - expected for new setups
+              dispatch({
+                type: 'UPDATE_STATE',
+                providerKeys: {},
+              });
+              return;
+            }
+            
+            // If we reach here, the table exists, so proceed with the query
+            const { data, error } = await supabase
+              .from('provider_keys')
+              .select('*')
+              .eq('user_id', user.id);
+            
+            // If there's a data error, handle it but don't throw
+            if (error) {
+              // Handle error silently
+              dispatch({
+                type: 'UPDATE_STATE',
+                providerKeys: {},
+              });
+              return;
+            }
+            
+            // If we found provider keys, process them
+            if (data && data.length > 0) {
+              const userKeys = data[0]; // Get the first entry
+              const keys: ProviderKeys = {};
+              
+              if (userKeys.openai_key) keys.openai = userKeys.openai_key;
+              if (userKeys.stability_key) keys.stability = userKeys.stability_key;
+              if (userKeys.midjourney_key) keys.midjourney = userKeys.midjourney_key;
+              if (userKeys.leonardo_key) keys.leonardo = userKeys.leonardo_key;
+              
+              dispatch({
+                type: 'UPDATE_STATE',
+                providerKeys: keys,
+              });
+            } else {
+              // No provider keys found for this user, which is fine for new users
+              // Initialize with empty object to prevent further fetch attempts
+              dispatch({
+                type: 'UPDATE_STATE',
+                providerKeys: {},
+              });
+            }
+          } catch (fetchError) {
+            // Handle any other errors silently
+            // Set empty provider keys to avoid further errors
+            dispatch({
+              type: 'UPDATE_STATE',
+              providerKeys: {},
+            });
+          }
+        } else if (user === null && !authLoading) {
+          // User is definitely not logged in, clear any existing provider keys
+          dispatch({
+            type: 'UPDATE_STATE',
+            providerKeys: {},
+          });
         }
-
-        if (data) {
-          const keys: ProviderKeys = {}
-          if (data.openai_key) keys.openai = data.openai_key
-          if (data.stability_key) keys.stability = data.stability_key
-          if (data.midjourney_key) keys.midjourney = data.midjourney_key
-          if (data.leonardo_key) keys.leonardo = data.leonardo_key
-
-          setState(prev => ({ ...prev, providerKeys: keys }))
-        }
+        // If user is still loading (authLoading === true), we'll wait for the next cycle
+      } catch (err) {
+        // Set empty provider keys to avoid further errors
+        dispatch({
+          type: 'UPDATE_STATE',
+          providerKeys: {},
+        });
       }
-    }
+    };
 
-    fetchProviderKeys()
-  }, [user, supabase])
+    // Only run the effect if authentication state is stable
+    if (!authLoading) {
+      fetchProviderKeys();
+    }
+  }, [user, supabase, authLoading]);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
-    setState(prev => {
-      const newDarkMode = !prev.darkMode
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('darkMode', String(newDarkMode))
-      }
-      return { ...prev, darkMode: newDarkMode }
+    dispatch({
+      type: 'UPDATE_STATE',
+      darkMode: !state.darkMode,
     })
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('darkMode', String(!state.darkMode))
+    }
   }
 
   // Add a notification
@@ -162,10 +390,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       duration: notification.duration || 5000,
     }
 
-    setState(prev => ({
-      ...prev,
-      notifications: [...prev.notifications, newNotification],
-    }))
+    dispatch({
+      type: 'UPDATE_STATE',
+      notifications: [...state.notifications, newNotification],
+    })
 
     // Auto-remove notification after duration if autoHide is true
     if (newNotification.autoHide) {
@@ -177,10 +405,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Remove a notification
   const removeNotification = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      notifications: prev.notifications.filter(n => n.id !== id),
-    }))
+    dispatch({
+      type: 'UPDATE_STATE',
+      notifications: state.notifications.filter(n => n.id !== id),
+    })
   }
 
   // Set a provider API key
@@ -188,13 +416,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (!user) return
 
     // Update local state
-    setState(prev => ({
-      ...prev,
+    dispatch({
+      type: 'UPDATE_STATE',
       providerKeys: {
-        ...prev.providerKeys,
+        ...state.providerKeys,
         [provider]: key,
       },
-    }))
+    })
 
     // Determine which column to update based on the provider
     const columnName = `${provider}_key`
@@ -206,7 +434,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       .eq('user_id', user.id)
 
     if (fetchError) {
-      console.error('Error checking for existing provider keys:', fetchError)
+      // Handle error silently
       return
     }
 
@@ -218,7 +446,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         .eq('user_id', user.id)
 
       if (error) {
-        console.error('Error updating provider key:', error)
+        // Handle error silently
       }
     } else {
       // Create new record
@@ -227,7 +455,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         .insert([{ user_id: user.id, [columnName]: key }])
 
       if (error) {
-        console.error('Error inserting provider key:', error)
+        // Handle error silently
       }
     }
   }
@@ -237,13 +465,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (!user) return
 
     // Update local state
-    setState(prev => {
-      const newKeys = { ...prev.providerKeys }
-      delete newKeys[provider]
-      return {
-        ...prev,
-        providerKeys: newKeys,
-      }
+    dispatch({
+      type: 'UPDATE_STATE',
+      providerKeys: {
+        ...state.providerKeys,
+        [provider]: undefined,
+      },
     })
 
     // Determine which column to update based on the provider
@@ -256,7 +483,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('Error removing provider key:', error)
+      // Handle error silently
     }
   }
 
@@ -270,48 +497,47 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     key: K,
     value: UserPreferences[K],
   ) => {
-    setState(prev => {
-      const newPreferences = {
-        ...prev.userPreferences,
+    if (typeof window !== 'undefined') {
+      const updatedPreferences = {
+        ...state.userPreferences,
         [key]: value,
       }
-
-      // Save to localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('userPreferences', JSON.stringify(newPreferences))
-      }
-
-      return {
-        ...prev,
-        userPreferences: newPreferences,
-      }
-    })
+      dispatch({
+        type: 'UPDATE_STATE',
+        userPreferences: updatedPreferences,
+      })
+      window.localStorage.setItem(
+        'userPreferences',
+        JSON.stringify(updatedPreferences),
+      )
+    }
   }
 
   // Add a recent prompt
   const addRecentPrompt = (prompt: string) => {
-    setState(prev => {
-      // Add to the beginning and limit to 10 items
-      const newPrompts = [
-        prompt,
-        ...prev.userPreferences.recentPrompts.filter(p => p !== prompt),
-      ].slice(0, 10)
-
-      const newPreferences = {
-        ...prev.userPreferences,
-        recentPrompts: newPrompts,
-      }
-
-      // Save to localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('userPreferences', JSON.stringify(newPreferences))
-      }
-
-      return {
-        ...prev,
-        userPreferences: newPreferences,
-      }
+    dispatch({
+      type: 'UPDATE_STATE',
+      userPreferences: {
+        ...state.userPreferences,
+        recentPrompts: [
+          prompt,
+          ...state.userPreferences.recentPrompts.filter(p => p !== prompt),
+        ].slice(0, 10),
+      },
     })
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(
+        'userPreferences',
+        JSON.stringify({
+          ...state.userPreferences,
+          recentPrompts: [
+            prompt,
+            ...state.userPreferences.recentPrompts.filter(p => p !== prompt),
+          ].slice(0, 10),
+        }),
+      )
+    }
   }
 
   const value = {
@@ -324,9 +550,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     getProviderKey,
     setUserPreference,
     addRecentPrompt,
+    user,
+    profile,
   }
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
+  return (
+    <AppContext.Provider value={value}>{children}</AppContext.Provider>
+  )
 }
 
 // Custom hook to use the AppContext

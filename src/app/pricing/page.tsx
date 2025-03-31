@@ -25,6 +25,7 @@ import {
   Switch,
   Typography,
 } from '@mui/material'
+import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -116,10 +117,8 @@ const faqs = [
 
 export default function Pricing() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
   const [annual, setAnnual] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [notification, setNotification] = useState(false)
 
   useEffect(() => {
@@ -128,13 +127,13 @@ export default function Pricing() {
         data: { user },
       } = await supabase.auth.getUser()
       setUser(user)
-      setLoading(false)
     }
     getUser()
   }, [])
 
-  const handleSubscribe = (planId: string) => {
-    setSelectedPlan(planId)
+  // eslint-disable-next-line no-unused-vars
+  const handleSubscribe = (_planId: string) => {
+    // _planId would be used to identify the selected plan in a real implementation
 
     // Check if user is logged in
     if (!user) {
@@ -156,7 +155,7 @@ export default function Pricing() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={user} loading={loading} />
+      <MainAppBar />
 
       <Box
         sx={{
@@ -292,7 +291,17 @@ export default function Pricing() {
                   {plan.features.map((feature, index) => (
                     <ListItem key={index} disableGutters sx={{ py: 1 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleIcon color={plan.color as any} />
+                        <CheckCircleIcon
+                          color={
+                            plan.color as
+                              | 'primary'
+                              | 'secondary'
+                              | 'error'
+                              | 'info'
+                              | 'success'
+                              | 'warning'
+                          }
+                        />
                       </ListItemIcon>
                       <ListItemText
                         primary={feature}
@@ -305,7 +314,15 @@ export default function Pricing() {
                 <Button
                   fullWidth
                   variant='contained'
-                  color={plan.color as any}
+                  color={
+                    plan.color as
+                      | 'primary'
+                      | 'secondary'
+                      | 'error'
+                      | 'info'
+                      | 'success'
+                      | 'warning'
+                  }
                   size='large'
                   onClick={() => handleSubscribe(plan.id)}
                   sx={{

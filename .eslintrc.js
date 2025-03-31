@@ -31,12 +31,29 @@ module.exports = {
       version: 'detect',
     },
   },
+  // Add ignorePatterns to exclude generated files and build directories
+  ignorePatterns: [
+    '.next/**',
+    'out/**',
+    'dist/**',
+    'node_modules/**',
+    '*.config.js',
+  ],
   rules: {
     'prettier/prettier': ['error'], // Run Prettier as an ESLint rule
     'react/react-in-jsx-scope': 'off', // Not needed in Next.js
     'react/prop-types': 'off', // We're using TypeScript
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn'],
+    '@typescript-eslint/no-unused-vars': ['warn', { 
+      'argsIgnorePattern': '^_',
+      'varsIgnorePattern': '^_',
+      // This will help with interface method parameters
+      'ignoreRestSiblings': true
+    }],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
+    // Add rule to allow any in certain cases
+    '@typescript-eslint/no-explicit-any': 'warn',
+    // Add HTML element rules for TypeScript
+    'no-undef': 'off', // TypeScript handles this better
   },
 }

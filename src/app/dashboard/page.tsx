@@ -5,7 +5,8 @@ import ProviderKeyModal from '@/components/dashboard/ProviderKeyModal'
 import SubscriptionModal from '@/components/dashboard/SubscriptionModal'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
-import { supabase } from '@/lib/supabase'
+import { UserProfile } from '@/lib/supabase'
+import { User } from '@supabase/supabase-js'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import {
@@ -30,17 +31,8 @@ import {
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-
-// Define UserProfile type properly
-interface UserProfile {
-  id: string
-  email: string
-  freeImageUsed: boolean
-  subscription_tier: 'free' | 'pro' | 'premium'
-  custom_api_key?: string
-  created_at?: string
-  updated_at?: string
-}
+import { useApp } from '@/contexts/AppContext'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 // AI providers
 const aiProviders = [
@@ -70,8 +62,10 @@ const aiProviders = [
 
 export default function Dashboard() {
   const router = useRouter()
+  const { user: contextUser, isAuthLoading } = useApp()
+  const supabase = createClientComponentClient()
 
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -81,10 +75,8 @@ export default function Dashboard() {
     null,
   )
   const [selectedProvider, setSelectedProvider] = useState('openai')
+  const [providerKeys, setProviderKeys] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
-  const [customApiKey, setCustomApiKey] = useState<string>('')
-
-  // Modal states
   const [showProviderKeyModal, setShowProviderKeyModal] = useState(false)
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
 
@@ -93,16 +85,22 @@ export default function Dashboard() {
       try {
         // Get user
         const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        setUser(user)
+          data: { session },
+        } = await supabase.auth.getSession()
+        
+        if (!session) {
+          router.push('/auth/signin')
+          return
+        }
+        
+        setUser(session.user)
 
-        if (user) {
+        if (session.user) {
           // Get user profile
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', user.id)
+            .eq('id', session.user.id)
             .single()
 
           if (profileError) {
@@ -112,9 +110,9 @@ export default function Dashboard() {
                 .from('profiles')
                 .insert([
                   {
-                    id: user.id,
-                    email: user.email,
-                    freeImageUsed: false,
+                    id: session.user.id,
+                    email: session.user.email,
+                    free_generations_used: 0,
                     subscription_tier: 'free',
                   },
                 ])
@@ -135,11 +133,6 @@ export default function Dashboard() {
             }
           } else {
             setProfile(profileData as UserProfile)
-
-            // If they have a custom API key stored, load it
-            if (profileData?.custom_api_key) {
-              setCustomApiKey(profileData.custom_api_key)
-            }
           }
         }
       } catch (error) {
@@ -153,11 +146,11 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    // Redirect if not authenticated
-    if (!loading && !user) {
+    // Redirect if not authenticated and not loading
+    if (!loading && !user && !isAuthLoading && !contextUser) {
       router.push('/auth/signin')
     }
-  }, [loading, user, router])
+  }, [loading, user, router, isAuthLoading, contextUser])
 
   const handleFileUpload = (file: File) => {
     setUploadedImage(file)
@@ -171,7 +164,7 @@ export default function Dashboard() {
   }
 
   const handleCustomApiKeySubmit = async (providerKey: string) => {
-    setCustomApiKey(providerKey)
+    setProviderKeys({ ...providerKeys, [selectedProvider]: providerKey })
     setShowProviderKeyModal(false)
 
     // Update the user's custom API key in the database
@@ -187,86 +180,60 @@ export default function Dashboard() {
     }
   }
 
-  const ghibliPrompt = `Create a Studio Ghibli style artwork based on a selfie of a person in a restaurant or bar. 
-Transform the subject into a Ghibli character with simplified, expressive features and slightly larger eyes. 
-Render the image in Ghibli's signature watercolor aesthetic with soft, warm lighting. 
-The background should feature enhanced versions of the colorful abstract artwork on the wall, made more dreamlike and 
-fantastical with subtle magical elements like glowing dust particles. 
-Include wooden beams and pendant lights from the original, but with the warm, 
-nostalgic ambiance typical of Ghibli interiors. 
-Use a palette of rich but soft colors with the characteristic Ghibli attention to texture and detail. 
-The overall mood should be contemplative yet warm, capturing the essence of directors Hayao Miyazaki and Isao Takahata's artistic style.`
-
   const handleGenerateImage = async () => {
-    if (!uploadedImage) {
-      setError('Please upload an image first')
-      return
-    }
-
-    if (!profile) {
-      setError('Unable to fetch your profile information')
-      return
-    }
-
-    // Check if user has already used their free image
-    if (
-      profile.freeImageUsed &&
-      profile.subscription_tier === 'free' &&
-      !customApiKey
-    ) {
-      // Show options for user
-      setError(
-        "You've already used your free transformation. Please provide your API key or subscribe to a plan.",
-      )
-      return
-    }
+    if (!uploadedImage || !selectedProvider) return
 
     setGenerating(true)
     setError(null)
+    setGeneratedImageUrl(null)
+
+    // Use window.FormData to ensure it's defined in the browser context
+    const formData = new window.FormData()
+    formData.append('image', uploadedImage)
+    formData.append('provider', selectedProvider)
 
     try {
-      // Create FormData for API call
-      const formData = new window.FormData()
-      formData.append('image', uploadedImage)
-      formData.append('prompt', ghibliPrompt)
-      formData.append('provider', selectedProvider)
-
-      if (customApiKey) {
-        formData.append('api_key', customApiKey)
+      // Check if user is on free tier and has already used their free generation
+      if (
+        profile &&
+        profile.subscription_tier === 'free' &&
+        (profile.free_generations_used ?? 0) > 0 &&
+        !providerKeys[selectedProvider]
+      ) {
+        setShowProviderKeyModal(true)
+        setGenerating(false)
+        return
       }
 
-      // Actual API call to your backend endpoint
+      // Add API key if available
+      if (providerKeys && providerKeys[selectedProvider]) {
+        formData.append('apiKey', providerKeys[selectedProvider])
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         body: formData,
       })
 
-      // Handle API errors
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.message ||
-            `Error: ${response.status} - ${response.statusText}`,
-        )
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to generate image')
       }
 
       const data = await response.json()
-
-      if (!data.imageUrl) {
-        throw new Error('No image URL received from the server')
-      }
-
       setGeneratedImageUrl(data.imageUrl)
 
-      // If this was their free image, mark it as used
+      // If this was a free tier user's first generation, update their usage in the database
       if (
-        !profile.freeImageUsed &&
+        user &&
+        profile &&
         profile.subscription_tier === 'free' &&
-        !customApiKey
+        (profile.free_generations_used ?? 0) === 0 &&
+        !providerKeys[selectedProvider]
       ) {
         const { error } = await supabase
           .from('profiles')
-          .update({ freeImageUsed: true })
+          .update({ free_generations_used: 1 })
           .eq('id', user.id)
 
         if (error) {
@@ -275,11 +242,11 @@ The overall mood should be contemplative yet warm, capturing the essence of dire
           )
         } else {
           // Update local state
-          setProfile({ ...profile, freeImageUsed: true })
+          setProfile({ ...profile, free_generations_used: 1 })
         }
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to generate image. Please try again.')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to generate image. Please try again.')
     } finally {
       setGenerating(false)
     }
@@ -309,7 +276,7 @@ The overall mood should be contemplative yet warm, capturing the essence of dire
 
   const handleShowOptions = () => {
     // Determine which modal to show
-    if (profile?.freeImageUsed && profile?.subscription_tier === 'free') {
+    if (profile && (profile.free_generations_used ?? 0) > 0 && profile.subscription_tier === 'free') {
       setShowProviderKeyModal(true)
     }
   }
@@ -327,7 +294,7 @@ The overall mood should be contemplative yet warm, capturing the essence of dire
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={user} loading={false} />
+      <MainAppBar />
 
       <Container component='main' sx={{ flexGrow: 1, py: 4 }}>
         <Typography
@@ -344,27 +311,29 @@ The overall mood should be contemplative yet warm, capturing the essence of dire
             severity='error'
             sx={{ mb: 3 }}
             action={
-              profile?.freeImageUsed &&
-              profile?.subscription_tier === 'free' ? (
+              profile && 
+              (profile.free_generations_used ?? 0) > 0 &&
+              profile.subscription_tier === 'free' ? (
                 <Button
                   color='inherit'
                   size='small'
                   onClick={handleShowOptions}
                 >
-                  See Options
+                  Show Options
                 </Button>
-              ) : undefined
+              ) : null
             }
           >
             {error}
           </Alert>
         )}
 
-        {profile?.freeImageUsed === false &&
-          profile?.subscription_tier === 'free' && (
+        {profile && 
+          (profile.free_generations_used ?? 0) === 0 &&
+          profile.subscription_tier === 'free' && (
             <Alert severity='info' sx={{ mb: 3 }}>
               You have 1 free image transformation available! Enjoy your Ghibli
-              experience.
+              style image.
             </Alert>
           )}
 

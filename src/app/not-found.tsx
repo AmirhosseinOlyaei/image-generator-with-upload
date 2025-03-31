@@ -11,7 +11,7 @@ export default function NotFound() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={null} loading={false} />
+      <MainAppBar />
 
       <Container
         component='main'

@@ -1,4 +1,5 @@
 import ThemeRegistry from '@/components/ThemeRegistry'
+import { AppProvider } from '@/contexts/AppContext'
 import { Metadata } from 'next'
 import React from 'react'
 
@@ -19,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body>
-        <ThemeRegistry>{children}</ThemeRegistry>
+        <ThemeRegistry>
+          <AppProvider>{children}</AppProvider>
+        </ThemeRegistry>
       </body>
     </html>
   )

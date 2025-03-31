@@ -71,7 +71,7 @@ export default function HowItWorks() {
         <Grid container spacing={4} justifyContent='center'>
           <Grid item xs={12} md={10} lg={8}>
             <Stepper orientation='vertical'>
-              {steps.map((step, index) => (
+              {steps.map((step) => (
                 <Step key={step.label} active={true}>
                   <StepLabel
                     StepIconComponent={() => (

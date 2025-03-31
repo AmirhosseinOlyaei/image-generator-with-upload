@@ -18,7 +18,7 @@ export default function CookiePolicy() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={null} loading={false} />
+      <MainAppBar />
 
       <Container component='main' sx={{ flexGrow: 1, py: 8 }}>
         <Paper sx={{ p: 4, borderRadius: 2 }}>

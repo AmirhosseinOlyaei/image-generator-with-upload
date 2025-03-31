@@ -1,33 +1,60 @@
 'use client'
 
 import GhibliShowcase from '@/components/landing/GhibliShowcase'
-import HeroSection from '@/components/landing/HeroSection'
 import HowItWorks from '@/components/landing/HowItWorks'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
-import { supabase } from '@/lib/supabase'
-import { Box, Button, Container, Typography } from '@mui/material'
+import { Box, Button, Container, Typography, CircularProgress } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function Home() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const supabase = createClientComponentClient()
 
+  // Check authentication status directly from Supabase
   useEffect(() => {
-    async function getUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
+    const checkAuthStatus = async () => {
+      try {
+        setIsCheckingAuth(true)
+        const { data, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          throw error
+        }
+        
+        setIsAuthenticated(!!data.session)
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error checking auth status:', error)
+        setIsAuthenticated(false)
+      } finally {
+        setIsCheckingAuth(false)
+      }
     }
-    getUser()
-  }, [])
+
+    checkAuthStatus()
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(true)
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false)
+      }
+    })
+    
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const handleGetStarted = () => {
-    if (user) {
+    if (isAuthenticated) {
       router.push('/dashboard')
     } else {
       router.push('/auth/signin')
@@ -36,46 +63,78 @@ export default function Home() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={user} loading={loading} />
+      <MainAppBar />
 
-      <main style={{ flex: 1 }}>
-        <HeroSection onGetStarted={handleGetStarted} />
-        <GhibliShowcase />
-        <HowItWorks />
-
+      <Box
+        component='main'
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
         <Box
-          sx={{ backgroundColor: 'primary.light', py: 8, textAlign: 'center' }}
+          sx={{
+            py: { xs: 8, md: 12 },
+            textAlign: 'center',
+            background:
+              'linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1558470598-a5dda9640f68?q=80&w=1000&auto=format&fit=crop")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
         >
           <Container maxWidth='md'>
             <Typography
               variant='h2'
-              component='h2'
+              component='h1'
               gutterBottom
-              sx={{ color: 'white', fontWeight: 'bold', mb: 4 }}
+              sx={{
+                fontWeight: 'bold',
+                mb: 4,
+                fontSize: { xs: '2.5rem', md: '3.5rem' },
+              }}
             >
-              Ready to Transform Your Photos?
+              Transform Your Photos into Studio Ghibli Art
+            </Typography>
+            <Typography
+              variant='h5'
+              component='p'
+              color='text.secondary'
+              sx={{ mb: 6, maxWidth: '800px', mx: 'auto' }}
+            >
+              Upload your images and watch as AI transforms them into beautiful
+              Studio Ghibli style artwork in seconds.
             </Typography>
             <Button
               variant='contained'
-              color='secondary'
               size='large'
               onClick={handleGetStarted}
+              disabled={isCheckingAuth}
               sx={{
-                fontSize: '1.2rem',
-                py: 1.5,
+                py: 2,
                 px: 4,
-                boxShadow: '0px 8px 16px rgba(0,0,0,0.2)',
+                fontSize: '1.1rem',
+                borderRadius: 2,
+                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
                 '&:hover': {
                   transform: 'translateY(-2px)',
-                  boxShadow: '0px 10px 20px rgba(0,0,0,0.25)',
+                  boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)',
                 },
               }}
             >
-              {user ? 'Go to Dashboard' : 'Get Started Now'}
+              {isCheckingAuth ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                isAuthenticated ? 'Go to Dashboard' : 'Get Started Now'
+              )}
             </Button>
           </Container>
         </Box>
-      </main>
+
+        <GhibliShowcase />
+        <HowItWorks />
+      </Box>
 
       <Footer />
     </Box>

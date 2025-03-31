@@ -97,9 +97,11 @@ export default function ThemeRegistry({
   children: React.ReactNode
 }) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
+    <React.StrictMode>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </React.StrictMode>
   )
 }
