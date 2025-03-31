@@ -29,7 +29,7 @@ export default function AccountSettings() {
   const { addNotification } = useApp()
 
   // Form state
-  const [displayName, setDisplayName] = useState(profile?.display_name || '')
+  const [fullName, setFullName] = useState(profile?.full_name || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -37,8 +37,8 @@ export default function AccountSettings() {
 
   // Handle profile update
   const handleUpdateProfile = async () => {
-    if (!displayName.trim()) {
-      setError('Display name cannot be empty')
+    if (!fullName.trim()) {
+      setError('Full name cannot be empty')
       return
     }
 
@@ -48,7 +48,7 @@ export default function AccountSettings() {
       setSuccess(null)
 
       const updates: Partial<UserProfile> = {
-        display_name: displayName.trim(),
+        full_name: fullName.trim(),
       }
 
       const success = await updateProfile(updates)
@@ -77,7 +77,7 @@ export default function AccountSettings() {
 
   // Cancel edit mode
   const handleCancelEdit = () => {
-    setDisplayName(profile?.display_name || '')
+    setFullName(profile?.full_name || '')
     setEditMode(false)
     setError(null)
   }
@@ -96,31 +96,31 @@ export default function AccountSettings() {
 
   // Get subscription tier display name
   const getSubscriptionDisplay = () => {
-    if (!profile.subscription_tier) return 'Free Plan'
+    if (!profile.plan) return 'Free Plan'
     return (
-      profile.subscription_tier.charAt(0).toUpperCase() +
-      profile.subscription_tier.slice(1) +
+      profile.plan.charAt(0).toUpperCase() +
+      profile.plan.slice(1) +
       ' Plan'
     )
   }
 
-  // Get free generations display
-  const getFreeGenerationsDisplay = () => {
-    const used = profile.free_generations_used || 0
+  // Get credits display
+  const getCreditsDisplay = () => {
+    const credits = profile.credits || 0
     const limit = 1 // Assuming 1 free generation
-    return `${used} / ${limit}`
+    return `${credits} / ${limit}`
   }
 
   return (
     <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', mr: 2 }}>
-          {profile.display_name?.charAt(0)?.toUpperCase() ||
+          {profile.full_name?.charAt(0)?.toUpperCase() ||
             user.email?.charAt(0)?.toUpperCase() || <AccountCircleIcon />}
         </Avatar>
         <Box>
           <Typography variant='h5' gutterBottom>
-            {profile.display_name || 'User'}
+            {profile.full_name || 'User'}
           </Typography>
           <Typography variant='body2' color='text.secondary'>
             {user.email}
@@ -128,7 +128,7 @@ export default function AccountSettings() {
           <Chip
             label={getSubscriptionDisplay()}
             size='small'
-            color={profile.subscription_tier === 'free' ? 'default' : 'primary'}
+            color={profile.plan === 'free' ? 'default' : 'primary'}
             sx={{ mt: 1 }}
           />
         </Box>
@@ -176,9 +176,9 @@ export default function AccountSettings() {
         >
           <TextField
             fullWidth
-            label='Display Name'
-            value={displayName}
-            onChange={e => setDisplayName(e.target.value)}
+            label='Full Name'
+            value={fullName}
+            onChange={e => setFullName(e.target.value)}
             disabled={!editMode}
             variant='outlined'
             sx={{ mb: 3 }}
@@ -203,8 +203,8 @@ export default function AccountSettings() {
         >
           <TextField
             fullWidth
-            label='Free Generations Used'
-            value={getFreeGenerationsDisplay()}
+            label='Free Credits'
+            value={getCreditsDisplay()}
             disabled
             variant='outlined'
             sx={{ mb: 3 }}

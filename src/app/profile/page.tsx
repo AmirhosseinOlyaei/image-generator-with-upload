@@ -48,8 +48,8 @@ export default function Profile() {
   const [success, setSuccess] = useState<string | null>(null)
 
   // Form fields
-  const [displayName, setDisplayName] = useState('')
-  const [customApiKey, setCustomApiKey] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [providerKey, setProviderKey] = useState('')
 
   useEffect(() => {
     async function getUser() {
@@ -74,8 +74,8 @@ export default function Profile() {
             setProfile(profileData as UserProfile)
 
             // Initialize form fields
-            setDisplayName(profileData.display_name || '')
-            setCustomApiKey(profileData.custom_api_key || '')
+            setFullName(profileData.full_name || '')
+            setProviderKey(profileData.provider_keys?.openai || '')
           }
         }
       } catch (error) {
@@ -110,8 +110,8 @@ export default function Profile() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          display_name: displayName,
-          custom_api_key: customApiKey,
+          full_name: fullName,
+          provider_keys: { openai: providerKey }
         })
         .eq('id', user.id)
 
@@ -123,8 +123,11 @@ export default function Profile() {
       if (profile) {
         setProfile({
           ...profile,
-          display_name: displayName,
-          custom_api_key: customApiKey,
+          full_name: fullName,
+          provider_keys: { 
+            ...profile.provider_keys,
+            openai: providerKey 
+          }
         })
       }
 
@@ -140,8 +143,8 @@ export default function Profile() {
   const handleCancel = () => {
     // Reset form values to original
     if (profile) {
-      setDisplayName(profile.display_name || '')
-      setCustomApiKey(profile.custom_api_key || '')
+      setFullName(profile.full_name || '')
+      setProviderKey(profile.provider_keys?.openai || '')
     }
     setEditing(false)
   }
@@ -273,8 +276,8 @@ export default function Profile() {
                     fontSize: '2.5rem',
                   }}
                 >
-                  {profile?.display_name ? (
-                    profile.display_name.charAt(0).toUpperCase()
+                  {profile?.full_name ? (
+                    profile.full_name.charAt(0).toUpperCase()
                   ) : user?.email ? (
                     user.email.charAt(0).toUpperCase()
                   ) : (
@@ -283,7 +286,7 @@ export default function Profile() {
                 </Avatar>
 
                 <Typography variant='h5' gutterBottom>
-                  {profile?.display_name ||
+                  {profile?.full_name ||
                     (user?.email ? user.email.split('@')[0] : 'User')}
                 </Typography>
 
@@ -293,24 +296,24 @@ export default function Profile() {
 
                 <Chip
                   label={
-                    profile?.subscription_tier === 'free'
+                    profile?.plan === 'free'
                       ? 'Free Plan'
-                      : profile?.subscription_tier === 'basic'
+                      : profile?.plan === 'basic'
                         ? 'Basic Plan'
-                        : profile?.subscription_tier === 'premium'
+                        : profile?.plan === 'premium'
                           ? 'Premium Plan'
-                          : profile?.subscription_tier === 'ultimate'
+                          : profile?.plan === 'ultimate'
                             ? 'Ultimate Plan'
                             : 'Free Plan'
                   }
                   color={
-                    profile?.subscription_tier === 'free'
+                    profile?.plan === 'free'
                       ? 'default'
-                      : profile?.subscription_tier === 'basic'
+                      : profile?.plan === 'basic'
                         ? 'primary'
-                        : profile?.subscription_tier === 'premium'
+                        : profile?.plan === 'premium'
                           ? 'secondary'
-                          : profile?.subscription_tier === 'ultimate'
+                          : profile?.plan === 'ultimate'
                             ? 'success'
                             : 'default'
                   }
@@ -325,21 +328,21 @@ export default function Profile() {
                   <ListItemText
                     primary='Free Image'
                     secondary={
-                      (profile?.free_generations_used ?? 0) > 0
-                        ? 'Used'
-                        : 'Available'
+                      (profile?.credits ?? 0) > 0
+                        ? 'Available'
+                        : 'Used'
                     }
                   />
                   <Chip
                     label={
-                      (profile?.free_generations_used ?? 0) > 0
-                        ? 'Used'
-                        : 'Available'
+                      (profile?.credits ?? 0) > 0
+                        ? 'Available'
+                        : 'Used'
                     }
                     color={
-                      (profile?.free_generations_used ?? 0) > 0
-                        ? 'default'
-                        : 'success'
+                      (profile?.credits ?? 0) > 0
+                        ? 'success'
+                        : 'default'
                     }
                     size='small'
                   />
@@ -419,9 +422,9 @@ export default function Profile() {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label='Display Name'
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
+                    label='Full Name'
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
                     disabled={!editing}
                     InputProps={{
                       startAdornment: (
@@ -452,10 +455,10 @@ export default function Profile() {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label='Custom API Key'
+                    label='API Key'
                     type={apiKeyVisible ? 'text' : 'password'}
-                    value={customApiKey}
-                    onChange={e => setCustomApiKey(e.target.value)}
+                    value={providerKey}
+                    onChange={e => setProviderKey(e.target.value)}
                     disabled={!editing}
                     placeholder='Enter your API key to use your own provider account'
                     helperText='Optional: Add your own AI provider API key to use instead of subscription credits'
@@ -538,13 +541,13 @@ export default function Profile() {
               <Typography variant='body1' paragraph>
                 Current Plan:{' '}
                 <b>
-                  {profile?.subscription_tier === 'free'
+                  {profile?.plan === 'free'
                     ? 'Free'
-                    : profile?.subscription_tier === 'basic'
+                    : profile?.plan === 'basic'
                       ? 'Basic'
-                      : profile?.subscription_tier === 'premium'
+                      : profile?.plan === 'premium'
                         ? 'Premium'
-                        : profile?.subscription_tier === 'ultimate'
+                        : profile?.plan === 'ultimate'
                           ? 'Ultimate'
                           : 'Free'}
                 </b>
@@ -555,7 +558,7 @@ export default function Profile() {
                 color='secondary'
                 onClick={() => router.push('/pricing')}
               >
-                {profile?.subscription_tier === 'free'
+                {profile?.plan === 'free'
                   ? 'Upgrade Plan'
                   : 'Manage Subscription'}
               </Button>

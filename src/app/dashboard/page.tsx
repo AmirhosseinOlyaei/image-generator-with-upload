@@ -105,34 +105,37 @@ export default function Dashboard() {
 
           if (profileError) {
             if (profileError.code === 'PGRST116') {
-              // Profile doesn't exist yet, create it
-              const { data: newProfile, error: createError } = await supabase
-                .from('profiles')
-                .insert([
-                  {
-                    id: session.user.id,
-                    email: session.user.email,
-                    free_generations_used: 0,
-                    subscription_tier: 'free',
+              // Profile doesn't exist yet, create it using the server API
+              try {
+                // Call our server-side API to create the profile
+                const response = await fetch('/api/profile/create', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
                   },
-                ])
-                .select('*')
-                .single()
+                });
 
-              if (!createError) {
-                setProfile(newProfile as UserProfile)
-              } else {
+                const result = await response.json();
+
+                if (response.ok && result.success && result.profile) {
+                  setProfile(result.profile as UserProfile);
+                } else {
+                  setError(
+                    'Error creating profile. Please try refreshing the page or contact support.'
+                  );
+                }
+              } catch (err) {
                 setError(
-                  'Error creating profile. Please try refreshing the page.',
-                )
+                  'Error creating profile. Please try refreshing the page or contact support.'
+                );
               }
             } else {
               setError(
-                'Error fetching profile. Please try refreshing the page.',
-              )
+                'Error fetching profile. Please try refreshing the page or contact support.'
+              );
             }
           } else {
-            setProfile(profileData as UserProfile)
+            setProfile(profileData as UserProfile);
           }
         }
       } catch (error) {
@@ -196,8 +199,8 @@ export default function Dashboard() {
       // Check if user is on free tier and has already used their free generation
       if (
         profile &&
-        profile.subscription_tier === 'free' &&
-        (profile.free_generations_used ?? 0) > 0 &&
+        profile.plan === 'free' &&
+        (profile.credits ?? 0) > 0 &&
         !providerKeys[selectedProvider]
       ) {
         setShowProviderKeyModal(true)
@@ -227,13 +230,13 @@ export default function Dashboard() {
       if (
         user &&
         profile &&
-        profile.subscription_tier === 'free' &&
-        (profile.free_generations_used ?? 0) === 0 &&
+        profile.plan === 'free' &&
+        (profile.credits ?? 0) === 0 &&
         !providerKeys[selectedProvider]
       ) {
         const { error } = await supabase
           .from('profiles')
-          .update({ free_generations_used: 1 })
+          .update({ credits: 1 })
           .eq('id', user.id)
 
         if (error) {
@@ -242,7 +245,7 @@ export default function Dashboard() {
           )
         } else {
           // Update local state
-          setProfile({ ...profile, free_generations_used: 1 })
+          setProfile({ ...profile, credits: 1 })
         }
       }
     } catch (error: unknown) {
@@ -276,7 +279,7 @@ export default function Dashboard() {
 
   const handleShowOptions = () => {
     // Determine which modal to show
-    if (profile && (profile.free_generations_used ?? 0) > 0 && profile.subscription_tier === 'free') {
+    if (profile && (profile.credits ?? 0) > 0 && profile.plan === 'free') {
       setShowProviderKeyModal(true)
     }
   }
@@ -312,8 +315,8 @@ export default function Dashboard() {
             sx={{ mb: 3 }}
             action={
               profile && 
-              (profile.free_generations_used ?? 0) > 0 &&
-              profile.subscription_tier === 'free' ? (
+              (profile.credits ?? 0) > 0 &&
+              profile.plan === 'free' ? (
                 <Button
                   color='inherit'
                   size='small'
@@ -329,8 +332,8 @@ export default function Dashboard() {
         )}
 
         {profile && 
-          (profile.free_generations_used ?? 0) === 0 &&
-          profile.subscription_tier === 'free' && (
+          (profile.credits ?? 0) === 0 &&
+          profile.plan === 'free' && (
             <Alert severity='info' sx={{ mb: 3 }}>
               You have 1 free image transformation available! Enjoy your Ghibli
               style image.
