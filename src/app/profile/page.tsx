@@ -3,8 +3,10 @@
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
 import { supabase, UserProfile } from '@/lib/supabase'
+import { User } from '@supabase/supabase-js'
 import ApiIcon from '@mui/icons-material/Api'
 import CancelIcon from '@mui/icons-material/Cancel'
+import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import LockIcon from '@mui/icons-material/Lock'
 import PersonIcon from '@mui/icons-material/Person'
@@ -36,7 +38,7 @@ import { useEffect, useState } from 'react'
 
 export default function Profile() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -67,7 +69,7 @@ export default function Profile() {
             .single()
 
           if (profileError) {
-            console.error('Error fetching profile:', profileError)
+            setError(`Error fetching profile: ${profileError.message}`)
           } else {
             setProfile(profileData as UserProfile)
 
@@ -77,7 +79,7 @@ export default function Profile() {
           }
         }
       } catch (error) {
-        console.error('Error in getUser:', error)
+        setError(error instanceof Error ? error.message : 'An error occurred while fetching user data')
       } finally {
         setLoading(false)
       }
@@ -93,36 +95,43 @@ export default function Profile() {
     }
   }, [loading, user, router])
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
     setSaving(true)
     setError(null)
     setSuccess(null)
 
     try {
-      const { error } = await supabase
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+
+      // Update profile in Supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           display_name: displayName,
           custom_api_key: customApiKey,
-          updated_at: new Date(),
         })
         .eq('id', user.id)
 
-      if (error) {
-        throw error
+      if (updateError) {
+        throw updateError
       }
 
       // Update local state
-      setProfile({
-        ...profile!,
-        display_name: displayName,
-        custom_api_key: customApiKey,
-      } as UserProfile)
+      if (profile) {
+        setProfile({
+          ...profile,
+          display_name: displayName,
+          custom_api_key: customApiKey,
+        })
+      }
 
       setSuccess('Profile updated successfully')
       setEditing(false)
-    } catch (error: any) {
-      setError(error.message || 'Failed to update profile')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred while updating profile')
     } finally {
       setSaving(false)
     }
@@ -142,6 +151,10 @@ export default function Profile() {
     setSuccess(null)
 
     try {
+      if (!user?.email) {
+        throw new Error('Email is required to reset password')
+      }
+      
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
@@ -151,8 +164,55 @@ export default function Profile() {
       }
 
       setSuccess('Password reset email sent to your email address')
-    } catch (error: any) {
-      setError(error.message || 'Failed to send password reset email')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to send password reset email')
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    setError(null)
+    setSaving(true)
+
+    try {
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+
+      // Delete user from Supabase Auth
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(
+        user.id
+      )
+
+      if (deleteError) {
+        throw deleteError
+      }
+
+      router.push('/')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to delete account')
+      setSaving(false)
+    }
+  }
+
+  const handleSendPasswordReset = async () => {
+    setError(null)
+    setSuccess(null)
+
+    try {
+      if (!user?.email) {
+        throw new Error('User email not available')
+      }
+
+      // Now we know user.email is defined
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email as string)
+
+      if (error) {
+        throw error
+      }
+
+      setSuccess('Password reset email sent to your email address')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to send password reset email')
     }
   }
 
@@ -169,7 +229,7 @@ export default function Profile() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={user} loading={false} />
+      <MainAppBar />
 
       <Container component='main' sx={{ flexGrow: 1, py: 4 }}>
         <Typography
@@ -443,6 +503,26 @@ export default function Profile() {
                 sx={{ mt: 1 }}
               >
                 Change Password
+              </Button>
+
+              <Button
+                variant='outlined'
+                color='error'
+                startIcon={<DeleteIcon />}
+                onClick={handleDeleteAccount}
+                sx={{ mt: 1 }}
+              >
+                Delete Account
+              </Button>
+
+              <Button
+                variant='outlined'
+                color='primary'
+                startIcon={<LockIcon />}
+                onClick={handleSendPasswordReset}
+                sx={{ mt: 1 }}
+              >
+                Send Password Reset
               </Button>
 
               <Divider sx={{ my: 4 }} />

@@ -171,14 +171,15 @@ export default function ApiKeysManager() {
         message: `${provider?.name || 'API'} key saved successfully`,
         type: 'success',
       })
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to save ${providerId} API key`
       setErrors(prev => ({
         ...prev,
-        [providerId]: error.message || `Failed to save ${providerId} API key`,
+        [providerId]: errorMessage,
       }))
 
       addNotification({
-        message: error.message || `Failed to save ${providerId} API key`,
+        message: errorMessage,
         type: 'error',
       })
     } finally {
@@ -216,14 +217,15 @@ export default function ApiKeysManager() {
         message: `${provider?.name || 'API'} key removed successfully`,
         type: 'info',
       })
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to remove ${providerId} API key`
       setErrors(prev => ({
         ...prev,
-        [providerId]: error.message || `Failed to remove ${providerId} API key`,
+        [providerId]: errorMessage,
       }))
 
       addNotification({
-        message: error.message || `Failed to remove ${providerId} API key`,
+        message: errorMessage,
         type: 'error',
       })
     } finally {

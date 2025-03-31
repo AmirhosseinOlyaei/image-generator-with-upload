@@ -63,10 +63,11 @@ export default function AccountSettings() {
       } else {
         throw new Error('Failed to update profile')
       }
-    } catch (error: any) {
-      setError(error.message || 'An error occurred while updating profile')
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while updating profile'
+      setError(errorMessage)
       addNotification({
-        message: error.message || 'An error occurred while updating profile',
+        message: errorMessage,
         type: 'error',
       })
     } finally {
