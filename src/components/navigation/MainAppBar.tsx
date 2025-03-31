@@ -166,17 +166,38 @@ export default function MainAppBar() {
           alignItems: 'center',
           justifyContent: 'center',
           p: 2,
-          bgcolor: 'primary.main',
+          background:
+            'linear-gradient(135deg, rgba(165, 204, 217, 0.9) 0%, rgba(213, 180, 209, 0.9) 100%)',
           color: 'white',
         }}
       >
-        <AutoFixHighIcon sx={{ mr: 1 }} />
-        <Typography variant='h6' component='div'>
+        <AutoFixHighIcon
+          sx={{
+            mr: 1,
+            filter: 'drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.15))',
+            color: 'white',
+          }}
+        />
+        <Typography
+          variant='h6'
+          component='div'
+          sx={{
+            fontWeight: 700,
+            textShadow: '0px 2px 3px rgba(0, 0, 0, 0.2)',
+          }}
+        >
           Ghibli Vision
         </Typography>
       </Box>
-      <Divider />
-      <List sx={{ py: 2 }}>
+      <Divider
+        sx={{
+          opacity: 0.6,
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(188, 203, 214, 0.5) 50%, transparent 100%)',
+          height: '1px',
+        }}
+      />
+      <List sx={{ py: 2, background: 'rgba(245, 247, 250, 0.95)' }}>
         {navItems.map(item => (
           <ListItem key={item.name} disablePadding>
             <ListItemButton
@@ -185,109 +206,34 @@ export default function MainAppBar() {
               sx={{
                 textAlign: 'center',
                 py: 1.5,
+                color: '#5c7b97',
+                transition: 'all 0.2s ease',
                 '&:hover': {
-                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  bgcolor: 'rgba(122, 181, 209, 0.1)',
+                  color: '#7b67aa',
                 },
               }}
             >
-              <ListItemText primary={item.name} />
+              <ListItemText
+                primary={item.name}
+                primaryTypographyProps={{
+                  style: {
+                    transition: 'all 0.2s ease',
+                  },
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
-        <Divider sx={{ my: 1 }} />
-        {/* TEMPORARILY DISABLED AUTH: Comment out authenticated-only sections */}
-        {/* {isAuthenticated ? (
-          <>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => handleNavigation('/dashboard')}
-                sx={{
-                  textAlign: 'left',
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <DashboardIcon color='primary' />
-                </ListItemIcon>
-                <ListItemText primary='Studio' />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => handleNavigation('/profile')}
-                sx={{
-                  textAlign: 'left',
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <AccountCircleIcon color='primary' />
-                </ListItemIcon>
-                <ListItemText primary='Profile' />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={handleLogout}
-                sx={{
-                  textAlign: 'left',
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <LogoutIcon color='error' />
-                </ListItemIcon>
-                <ListItemText primary='Logout' />
-              </ListItemButton>
-            </ListItem>
-          </>
-        ) : (
-          <>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => handleNavigation('/auth/signin')}
-                sx={{
-                  textAlign: 'left',
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <LoginIcon color='primary' />
-                </ListItemIcon>
-                <ListItemText primary='Sign In' />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => handleNavigation('/auth/signup')}
-                sx={{
-                  textAlign: 'left',
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <PersonAddIcon color='secondary' />
-                </ListItemIcon>
-                <ListItemText primary='Sign Up' />
-              </ListItemButton>
-            </ListItem>
-          </>
-        )} */}
+        <Divider
+          sx={{
+            my: 1,
+            opacity: 0.6,
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(188, 203, 214, 0.5) 50%, transparent 100%)',
+            height: '1px',
+          }}
+        />
       </List>
     </Box>
   )
@@ -296,12 +242,26 @@ export default function MainAppBar() {
     <>
       <AppBar
         position='static'
-        color='default'
         elevation={0}
         sx={{
+          background:
+            'linear-gradient(90deg, rgba(235,245,250,1) 0%, rgba(244,237,245,1) 50%, rgba(235,245,250,1) 100%)',
           borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
+          borderColor: 'rgba(190, 210, 230, 0.3)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.05)',
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background:
+              'linear-gradient(90deg, #7ab5d1 0%, #db9dcb 33%, #a6d8e2 66%, #7ab5d1 100%)',
+            opacity: 0.8,
+          },
         }}
       >
         <Container maxWidth='xl'>
@@ -312,7 +272,14 @@ export default function MainAppBar() {
               aria-label='open drawer'
               edge='start'
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' } }}
+              sx={{
+                mr: 2,
+                display: { sm: 'none' },
+                color: '#5c7b97',
+                '&:hover': {
+                  backgroundColor: 'rgba(122, 181, 209, 0.1)',
+                },
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -326,8 +293,12 @@ export default function MainAppBar() {
                 alignItems: 'center',
                 textDecoration: 'none',
                 color: 'inherit',
+                position: 'relative',
                 '&:hover': {
                   textDecoration: 'none',
+                  '& svg': {
+                    transform: 'rotate(12deg) scale(1.05)',
+                  },
                 },
               }}
             >
@@ -335,8 +306,10 @@ export default function MainAppBar() {
                 sx={{
                   display: { xs: 'none', sm: 'flex' },
                   mr: 1,
-                  color: 'primary.main',
+                  color: '#7b67aa',
                   fontSize: 32,
+                  filter: 'drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.15))',
+                  transition: 'transform 0.3s ease-in-out',
                 }}
               />
               <Typography
@@ -345,9 +318,16 @@ export default function MainAppBar() {
                 sx={{
                   mr: 2,
                   fontWeight: 700,
-                  color: 'primary.main',
+                  backgroundImage: 'linear-gradient(45deg, #7ab5d1, #db9dcb)',
+                  backgroundSize: '100%',
+                  backgroundRepeat: 'repeat',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  MozBackgroundClip: 'text',
+                  MozTextFillColor: 'transparent',
                   textDecoration: 'none',
                   letterSpacing: '.1rem',
+                  position: 'relative',
                 }}
               >
                 GHIBLI VISION
@@ -363,24 +343,33 @@ export default function MainAppBar() {
                   href={item.path}
                   sx={{
                     mx: 1,
-                    color: 'text.primary',
+                    color: '#5c7b97',
                     position: 'relative',
-                    '&:after': {
+                    transition: 'all 0.3s ease',
+                    overflow: 'hidden',
+                    '&::before': {
                       content: '""',
                       position: 'absolute',
-                      width: '0',
-                      height: '2px',
-                      bottom: '0',
                       left: '50%',
+                      bottom: 0,
+                      width: '0%',
+                      height: '2px',
+                      background:
+                        'linear-gradient(90deg, #8fb8d8 0%, #db9dcb 100%)',
+                      transition: 'all 0.3s ease',
                       transform: 'translateX(-50%)',
-                      backgroundColor: 'primary.main',
-                      transition: 'width 0.3s',
+                      opacity: 0,
                     },
                     '&:hover': {
                       backgroundColor: 'transparent',
-                      '&:after': {
+                      color: '#7b67aa',
+                      '&::before': {
                         width: '80%',
+                        opacity: 1,
                       },
+                    },
+                    '&:active': {
+                      transform: 'scale(0.98)',
                     },
                   }}
                 >
@@ -398,9 +387,9 @@ export default function MainAppBar() {
                 <>
                   <Button
                     component={Link}
-                    href='/dashboard'
-                    variant='outlined'
-                    color='primary'
+                    href="/dashboard"
+                    variant="outlined"
+                    color="primary"
                     startIcon={<DashboardIcon />}
                     sx={{ mr: 2 }}
                   >
@@ -408,11 +397,11 @@ export default function MainAppBar() {
                   </Button>
                   <IconButton
                     onClick={handleMenu}
-                    size='large'
-                    edge='end'
-                    aria-label='account of current user'
-                    aria-haspopup='true'
-                    color='inherit'
+                    size="large"
+                    edge="end"
+                    aria-label="account of current user"
+                    aria-haspopup="true"
+                    color="inherit"
                     sx={{
                       ml: 1,
                       border: '2px solid',
@@ -425,7 +414,7 @@ export default function MainAppBar() {
                     {userAvatar ? (
                       <Avatar
                         src={userAvatar}
-                        alt='User avatar'
+                        alt="User avatar"
                         sx={{ width: 32, height: 32 }}
                       />
                     ) : (
@@ -433,7 +422,7 @@ export default function MainAppBar() {
                     )}
                   </IconButton>
                   <Menu
-                    id='menu-appbar'
+                    id="menu-appbar"
                     anchorEl={anchorEl}
                     anchorOrigin={{
                       vertical: 'bottom',
@@ -478,7 +467,7 @@ export default function MainAppBar() {
                       }}
                     >
                       <ListItemIcon>
-                        <AccountCircleIcon fontSize='small' color='primary' />
+                        <AccountCircleIcon fontSize="small" color="primary" />
                       </ListItemIcon>
                       Profile
                     </MenuItem>
@@ -492,7 +481,7 @@ export default function MainAppBar() {
                       }}
                     >
                       <ListItemIcon>
-                        <DashboardIcon fontSize='small' color='primary' />
+                        <DashboardIcon fontSize="small" color="primary" />
                       </ListItemIcon>
                       Studio
                     </MenuItem>
@@ -507,7 +496,7 @@ export default function MainAppBar() {
                       }}
                     >
                       <ListItemIcon>
-                        <LogoutIcon fontSize='small' color='error' />
+                        <LogoutIcon fontSize="small" color="error" />
                       </ListItemIcon>
                       Sign Out
                     </MenuItem>
@@ -517,7 +506,7 @@ export default function MainAppBar() {
                 <>
                   <Button
                     component={Link}
-                    href='/auth/signin'
+                    href="/auth/signin"
                     sx={{
                       color: 'text.primary',
                       mr: 1,
@@ -531,9 +520,9 @@ export default function MainAppBar() {
                   </Button>
                   <Button
                     component={Link}
-                    href='/auth/signup'
-                    variant='contained'
-                    color='primary'
+                    href="/auth/signup"
+                    variant="contained"
+                    color="primary"
                     startIcon={<PersonAddIcon />}
                     sx={{
                       boxShadow: 2,
