@@ -41,37 +41,39 @@ export default function MainAppBar() {
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const supabase = createClientComponentClient()
 
-  // Helper function to safely fetch profile or create it if it doesn't exist
-  const safelyFetchProfile = async (userId: string) => {
-    try {
-      // First check if profile exists
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+  useEffect(() => {
+    const safelyFetchProfile = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
 
-      // If profile doesn't exist, skip creation (we'll let useAuth handle it)
-      if (error && error.code === 'PGRST116') {
-        // Simply return null without attempting to create a profile here
-        return null
-      } else if (error) {
-        // Log other errors but don't throw
-        // eslint-disable-next-line no-console
-        console.error('Error fetching profile:', error)
+        if (error) {
+          throw error
+        }
+
+        if (data) {
+          return data
+        }
+
+        const { data: createdData, error: createError } = await supabase
+          .from('profiles')
+          .insert([{ id: userId, credits: 0, plan: 'free' }])
+          .select()
+          .single()
+
+        if (createError) {
+          throw createError
+        }
+
+        return createdData
+      } catch (error) {
         return null
       }
-
-      return data?.avatar_url || null
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error in profile operation:', err)
-      return null
     }
-  }
 
-  // Check authentication status directly from Supabase
-  useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const { data, error } = await supabase.auth.getSession()
@@ -87,7 +89,7 @@ export default function MainAppBar() {
         if (isLoggedIn && data.session) {
           const avatarUrl = await safelyFetchProfile(data.session.user.id)
           if (avatarUrl) {
-            setUserAvatar(avatarUrl)
+            setUserAvatar(avatarUrl.avatar_url || null)
           }
         }
       } catch (error) {
@@ -102,18 +104,15 @@ export default function MainAppBar() {
     // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true)
 
-        // Get user avatar if available
-        if (session) {
-          ;(async () => {
-            const avatarUrl = await safelyFetchProfile(session.user.id)
-            if (avatarUrl) {
-              setUserAvatar(avatarUrl)
-            }
-          })()
+        if (session?.user) {
+          const profile = await safelyFetchProfile(session.user.id)
+          if (profile) {
+            setUserAvatar(profile.avatar_url || null)
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false)
@@ -121,7 +120,6 @@ export default function MainAppBar() {
       }
     })
 
-    // Cleanup subscription
     return () => {
       subscription.unsubscribe()
     }

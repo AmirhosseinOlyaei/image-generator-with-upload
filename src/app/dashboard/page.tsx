@@ -146,14 +146,14 @@ export default function Dashboard() {
     }
 
     getUser()
-  }, [])
+  }, [router, supabase])
 
   useEffect(() => {
     // Redirect if not authenticated and not loading
     if (!loading && !user && !isAuthLoading && !contextUser) {
       router.push('/auth/signin')
     }
-  }, [loading, user, router, isAuthLoading, contextUser])
+  }, [loading, user, isAuthLoading, contextUser, router])
 
   const handleFileUpload = (file: File) => {
     setUploadedImage(file)

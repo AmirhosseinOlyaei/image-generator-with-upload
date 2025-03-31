@@ -1,8 +1,7 @@
 import { Database } from '@/types/supabase'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import axios from 'axios'
 import { Buffer } from 'buffer'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
@@ -261,8 +260,11 @@ async function callLeonardoAI(
 
 export async function POST(request: NextRequest) {
   try {
-    // Create a Supabase client using the route handler
-    const supabase = createRouteHandlerClient<Database>({ cookies })
+    // Initialize Supabase client with direct API access
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
 
     // Get session to verify user is authenticated
     const {
@@ -304,8 +306,8 @@ export async function POST(request: NextRequest) {
 
     // Check if user has free image usage available or is subscribed
     const hasRemainingFreeGenerations =
-      profile.free_generations_used < 1 && profile.subscription_tier === 'free'
-    const isSubscribed = profile.subscription_tier !== 'free'
+      profile.credits > 0 && profile.plan === 'free'
+    const isSubscribed = profile.plan !== 'free'
 
     if (!hasRemainingFreeGenerations && !isSubscribed && !customApiKey) {
       return NextResponse.json(
@@ -325,11 +327,11 @@ export async function POST(request: NextRequest) {
       customApiKey || undefined,
     )
 
-    // If this was their free image, increment the counter
+    // If this was their free image, decrement the counter
     if (hasRemainingFreeGenerations) {
       await supabase
         .from('profiles')
-        .update({ free_generations_used: profile.free_generations_used + 1 })
+        .update({ credits: profile.credits - 1 })
         .eq('id', session.user.id)
     }
 
