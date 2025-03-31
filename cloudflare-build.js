@@ -20,53 +20,61 @@ dirsToClean.forEach(dir => {
   }
 })
 
-// Step 2: Run the Next.js static export build
-console.log('📦 Building Next.js application with static export...')
+// Step 2: Run the Next.js build with minimal configuration
+console.log('📦 Building Next.js application...')
 try {
-  // Modify next.config.js temporarily to enable static export
-  const nextConfigPath = path.resolve(process.cwd(), 'next.config.js')
-  const originalConfig = fs.readFileSync(nextConfigPath, 'utf8')
-  
-  // Add output: 'export' to the config
-  const modifiedConfig = originalConfig.replace(
-    "output: 'standalone'",
-    "output: 'export'"
-  )
-  
-  fs.writeFileSync(nextConfigPath, modifiedConfig)
-  
   // Run the build
   execSync('next build', { stdio: 'inherit' })
-  
-  // Restore original config
-  fs.writeFileSync(nextConfigPath, originalConfig)
-  
   console.log('✅ Build completed successfully!')
 } catch (error) {
   console.error('❌ Build failed:', error)
   process.exit(1)
 }
 
-// Step 3: Prepare for Cloudflare Pages deployment
-console.log('🔧 Preparing for Cloudflare Pages deployment...')
-const outputDir = 'out'
-const cfPagesDir = '.cloudflare/pages'
+// Step 3: Create a minimal deployment package for Cloudflare Pages
+console.log('📦 Creating deployment package for Cloudflare Pages...')
 
-// Ensure the Cloudflare Pages directory exists
-if (!fs.existsSync(cfPagesDir)) {
-  fs.mkdirSync(cfPagesDir, { recursive: true })
+// Create deployment directory
+const deployDir = '.cloudflare/deploy'
+if (fs.existsSync(deployDir)) {
+  fs.rmSync(deployDir, { recursive: true, force: true })
 }
+fs.mkdirSync(deployDir, { recursive: true })
 
-// Create a _routes.json file to handle client-side routing
+// Copy only the essential files
+console.log('📋 Copying essential files...')
+
+// Copy public directory
+execSync(`cp -R public ${deployDir}/`, { stdio: 'inherit' })
+
+// Copy .next/static to _next/static
+fs.mkdirSync(`${deployDir}/_next/static`, { recursive: true })
+execSync(`cp -R .next/static/* ${deployDir}/_next/static/`, { stdio: 'inherit' })
+
+// Create a simple index.html file
+const indexHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghibli Vision</title>
+  <meta http-equiv="refresh" content="0;url=/dashboard" />
+</head>
+<body>
+  <p>Redirecting to dashboard...</p>
+</body>
+</html>
+`
+fs.writeFileSync(`${deployDir}/index.html`, indexHtml)
+
+// Create a _routes.json file for Cloudflare Pages
 const routesJson = {
   version: 1,
   include: ['/*'],
   exclude: [],
 }
-fs.writeFileSync(
-  path.join(outputDir, '_routes.json'),
-  JSON.stringify(routesJson, null, 2),
-)
+fs.writeFileSync(`${deployDir}/_routes.json`, JSON.stringify(routesJson, null, 2))
 
-console.log('✅ Build optimized for Cloudflare Pages!')
-console.log(`🌐 Deploy the "${outputDir}" directory to Cloudflare Pages`)
+console.log('✅ Deployment package created successfully!')
+console.log(`🌐 Deploy the "${deployDir}" directory to Cloudflare Pages`)
