@@ -84,15 +84,15 @@ async function callOpenAI(
     // Ensure the base64 string is properly formatted for PNG
     // Remove any data URL prefix if present
     const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '')
-    
+
     // Convert base64 to Buffer
     const imageBuffer = Buffer.from(base64Data, 'base64')
-    
-    // Check file size (OpenAI limit is 4MB)
+
+    // Check file size (OpenAI limit is 10MB)
     const fileSizeInMB = imageBuffer.length / (1024 * 1024)
-    if (fileSizeInMB > 4) {
+    if (fileSizeInMB > 10) {
       throw new Error(
-        'Image size exceeds 4MB limit. Please use a smaller image.',
+        'Image size exceeds 10MB limit. Please use a smaller image.',
       )
     }
 
@@ -102,7 +102,8 @@ async function callOpenAI(
       messages: [
         {
           role: 'system',
-          content: 'You are an expert at analyzing images and describing them in detail for artistic transformation.',
+          content:
+            'You are an expert at analyzing images and describing them in detail for artistic transformation.',
         },
         {
           role: 'user',
@@ -123,8 +124,9 @@ async function callOpenAI(
       max_tokens: 500,
     })
 
-    const imageDescription = visionResponse.choices[0]?.message?.content || 'A person'
-    
+    const imageDescription =
+      visionResponse.choices[0]?.message?.content || 'A person'
+
     // Now use DALL-E 3 to generate a Ghibli-style version based on the description
     const enhancedPrompt = `Create a Studio Ghibli style character based on this exact description: ${imageDescription}. 
     
