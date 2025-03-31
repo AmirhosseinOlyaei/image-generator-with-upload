@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { useRef, useState } from 'react'
 
 interface ImageUploadProps {
+  // eslint-disable-next-line no-unused-vars
   onFileSelected: (file: File) => void
   imagePreview: string | null
 }
@@ -29,7 +30,8 @@ export default function ImageUpload({
   const handleUpload = async (file: File) => {
     // Validate file type
     if (!file.type.match('image.*')) {
-      alert('Please select an image file')
+      // eslint-disable-next-line no-undef
+      window.alert('Please select an image file')
       return
     }
 
@@ -42,6 +44,7 @@ export default function ImageUpload({
 
       onFileSelected(file)
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error processing file:', error)
     } finally {
       setUploading(false)
@@ -86,6 +89,7 @@ export default function ImageUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onFileSelected(null as any)
   }
 

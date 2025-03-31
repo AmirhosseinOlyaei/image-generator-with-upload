@@ -48,8 +48,11 @@ interface GeneratedImage {
 interface ImageGalleryProps {
   images: GeneratedImage[]
   loading?: boolean
+  // eslint-disable-next-line no-unused-vars
   onDelete?: (id: string) => void
+  // eslint-disable-next-line no-unused-vars
   onFavorite?: (id: string, favorite: boolean) => void
+  // eslint-disable-next-line no-unused-vars
   onUpdateTitle?: (id: string, title: string) => void
 }
 
@@ -69,10 +72,12 @@ export default function ImageGallery({
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [titleDialogOpen, setTitleDialogOpen] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  // eslint-disable-next-line no-undef
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
   // Handle opening the action menu
   const handleMenuOpen = (
+    // eslint-disable-next-line no-undef
     event: React.MouseEvent<HTMLElement>,
     image: GeneratedImage,
   ) => {

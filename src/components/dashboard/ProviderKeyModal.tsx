@@ -21,6 +21,7 @@ import { useState } from 'react'
 interface ProviderKeyModalProps {
   open: boolean
   onClose: () => void
+  // eslint-disable-next-line no-unused-vars
   onSubmit: (apiKey: string) => void
   onSubscribe: () => void
   aiProvider: {
@@ -37,23 +38,24 @@ export default function ProviderKeyModal({
   onSubscribe,
   aiProvider,
 }: ProviderKeyModalProps) {
-  const [apiKey, setApiKey] = useState('')
+  const { name } = aiProvider;
+  const [key, setKey] = useState('')
   const [error, setError] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
 
   const handleSubmit = () => {
-    if (!apiKey.trim()) {
+    if (!key.trim()) {
       setError('Please enter a valid API key')
       return
     }
 
-    onSubmit(apiKey)
-    setApiKey('')
+    onSubmit(key)
+    setKey('')
     setError('')
   }
 
   const handleClose = () => {
-    setApiKey('')
+    setKey('')
     setError('')
     onClose()
   }
@@ -65,7 +67,7 @@ export default function ProviderKeyModal({
   return (
     <Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
       <DialogTitle sx={{ pr: 6 }}>
-        Add Your {aiProvider.name} API Key
+        Add Your {name} API Key
         <IconButton
           aria-label='close'
           onClick={handleClose}
@@ -84,8 +86,8 @@ export default function ProviderKeyModal({
         <Box sx={{ mb: 3 }}>
           <Typography variant='body1' paragraph>
             To continue generating Ghibli-style images, you need to provide your
-            own {aiProvider.name} API key. Your API key will be securely stored
-            and used only for your requests.
+            own {name} API key. Your API key will be securely stored and used
+            only for your requests.
           </Typography>
 
           <Alert severity='info' sx={{ mb: 2 }}>
@@ -94,10 +96,10 @@ export default function ProviderKeyModal({
           </Alert>
 
           <TextField
-            label={`${aiProvider.name} API Key`}
+            label={`${name} API Key`}
             fullWidth
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
+            value={key}
+            onChange={e => setKey(e.target.value)}
             error={!!error}
             helperText={error}
             type={showApiKey ? 'text' : 'password'}
@@ -121,8 +123,8 @@ export default function ProviderKeyModal({
             color='text.secondary'
             sx={{ display: 'block', mt: 1 }}
           >
-            You can find your API key in your {aiProvider.name} dashboard. Visit
-            their website to create an account and get your key.
+            You can find your API key in your {name} dashboard. Visit their
+            website to create an account and get your key.
           </Typography>
         </Box>
 
@@ -148,7 +150,7 @@ export default function ProviderKeyModal({
         <Button
           onClick={handleSubmit}
           variant='contained'
-          disabled={!apiKey.trim()}
+          disabled={!key.trim()}
         >
           Save API Key
         </Button>

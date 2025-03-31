@@ -202,7 +202,7 @@ export default function SubscriptionModal({
                       <ListItem key={index} disableGutters sx={{ py: 0.5 }}>
                         <ListItemIcon sx={{ minWidth: 32 }}>
                           <CheckCircleIcon
-                            color={plan.color as any}
+                            color={plan.color as 'primary' | 'secondary'}
                             fontSize='small'
                           />
                         </ListItemIcon>
@@ -222,7 +222,7 @@ export default function SubscriptionModal({
                     variant={
                       selectedPlan === plan.id ? 'contained' : 'outlined'
                     }
-                    color={plan.color as any}
+                    color={plan.color as 'primary' | 'secondary'}
                     size='large'
                     sx={{ mt: 'auto' }}
                     onClick={() => handleSelectPlan(plan.id)}

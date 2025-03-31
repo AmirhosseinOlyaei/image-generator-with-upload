@@ -33,11 +33,18 @@ import {
 import Image from 'next/image'
 import React, { useState } from 'react'
 
+// Define provider type for proper typing
+type Provider = 'openai' | 'stability' | 'midjourney' | 'leonardo'
+
 interface ImageGeneratorProps {
   onGenerateSuccess: (
+    // eslint-disable-next-line no-unused-vars
     originalImage: string,
+    // eslint-disable-next-line no-unused-vars
     generatedImage: string,
+    // eslint-disable-next-line no-unused-vars
     prompt: string,
+    // eslint-disable-next-line no-unused-vars
     provider: string,
   ) => void
   freeGenerationsLeft?: number
@@ -58,7 +65,6 @@ export default function ImageGenerator({
   const {
     file,
     preview,
-    uploading,
     error: uploadError,
     handleFileSelect,
     handleFileDrop,
@@ -67,8 +73,8 @@ export default function ImageGenerator({
 
   // State for image generation
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT)
-  const [provider, setProvider] = useState(
-    userPreferences.defaultProvider || 'openai',
+  const [provider, setProvider] = useState<Provider>(
+    (userPreferences.defaultProvider || 'openai') as Provider,
   )
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -76,7 +82,7 @@ export default function ImageGenerator({
   const [showPromptSuggestions, setShowPromptSuggestions] = useState(false)
 
   // Check if the user has a key for the selected provider
-  const hasProviderKey = Boolean(getProviderKey(provider as any))
+  const hasProviderKey = Boolean(getProviderKey(provider))
 
   // Sample prompt suggestions
   const promptSuggestions = [
@@ -88,7 +94,7 @@ export default function ImageGenerator({
   ]
 
   // Handle drop zone events
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent) => {
     event.preventDefault()
 
     if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
@@ -96,13 +102,13 @@ export default function ImageGenerator({
     }
   }
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
   }
 
   // Handle provider change
   const handleProviderChange = (event: SelectChangeEvent<string>) => {
-    setProvider(event.target.value)
+    setProvider(event.target.value as Provider)
   }
 
   // Reset the generation process
@@ -139,7 +145,7 @@ export default function ImageGenerator({
       }
 
       // Get the provider key if available
-      const apiKey = getProviderKey(provider as any)
+      const apiKey = getProviderKey(provider)
 
       // Call the generateImage service
       const result = await generateImage(provider, file, prompt, apiKey)
@@ -162,11 +168,14 @@ export default function ImageGenerator({
         message: 'Image generated successfully!',
         type: 'success',
       })
-    } catch (error: any) {
-      setError(error.message || 'Failed to generate image')
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : 'Failed to generate image',
+      )
 
       addNotification({
-        message: error.message || 'Failed to generate image',
+        message:
+          error instanceof Error ? error.message : 'Failed to generate image',
         type: 'error',
       })
     } finally {
