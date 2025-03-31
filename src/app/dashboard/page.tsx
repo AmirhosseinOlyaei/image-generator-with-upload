@@ -273,23 +273,28 @@ export default function Dashboard() {
 
   const handleDownloadImage = () => {
     if (generatedImageUrl) {
-      // For remote URLs, we need to handle CORS issues
-      // A better approach is to use a server endpoint for downloading
-      fetch(generatedImageUrl)
-        .then(response => response.blob())
-        .then(blob => {
-          const url = window.URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          link.download = 'ghibli-transformation.jpg'
-          document.body.appendChild(link)
-          link.click()
+      try {
+        setError(null)
+
+        // Create a download link that points to our proxy API
+        const proxyUrl = `/api/download?url=${encodeURIComponent(generatedImageUrl)}`
+
+        // Create and trigger download
+        const link = document.createElement('a')
+        link.href = proxyUrl
+        link.download = `ghibli-transformation-${new Date().getTime()}.png`
+        document.body.appendChild(link)
+        link.click()
+
+        // Clean up
+        setTimeout(() => {
           document.body.removeChild(link)
-          window.URL.revokeObjectURL(url) // Clean up
-        })
-        .catch(() => {
-          setError('Failed to download image. Please try again.')
-        })
+        }, 100)
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Download error:', error)
+        setError('Failed to download image. Please try again.')
+      }
     }
   }
 
@@ -350,7 +355,8 @@ export default function Dashboard() {
 
         {/* TEMPORARILY DISABLED AUTH: Add info alert about disabled auth */}
         <Alert severity='info' sx={{ mb: 3 }}>
-          Authentication is temporarily disabled. You can generate images without logging in.
+          Authentication is temporarily disabled. You can generate images
+          without logging in.
         </Alert>
 
         <Grid container spacing={4}>
@@ -453,7 +459,11 @@ export default function Dashboard() {
                     <img
                       src={generatedImageUrl}
                       alt='Generated Ghibli-style image'
-                      style={{ objectFit: 'contain', width: '100%', height: '100%' }}
+                      style={{
+                        objectFit: 'contain',
+                        width: '100%',
+                        height: '100%',
+                      }}
                     />
                   </Box>
 
@@ -491,81 +501,6 @@ export default function Dashboard() {
             </Paper>
           </Grid>
         </Grid>
-
-        <Box sx={{ mt: 8 }}>
-          <Typography
-            variant='h5'
-            gutterBottom
-            sx={{ fontWeight: 'bold', color: 'primary.dark' }}
-          >
-            About Ghibli Style Transformation
-          </Typography>
-
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ height: '100%' }}>
-                <CardMedia
-                  component='img'
-                  height='140'
-                  image='https://images.unsplash.com/photo-1585255318859-f5c15f4cffe9?q=80&w=500&auto=format&fit=crop'
-                  alt='Ghibli style example'
-                />
-                <CardContent>
-                  <Typography gutterBottom variant='h6' component='div'>
-                    Watercolor Aesthetic
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    Studio Ghibli's signature style features soft
-                    watercolor-like textures with delicate brush strokes and
-                    gentle color gradients.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Card sx={{ height: '100%' }}>
-                <CardMedia
-                  component='img'
-                  height='140'
-                  image='https://images.unsplash.com/photo-1608889175638-9322300c5477?q=80&w=500&auto=format&fit=crop'
-                  alt='Ghibli style example'
-                />
-                <CardContent>
-                  <Typography gutterBottom variant='h6' component='div'>
-                    Character Design
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    Characters feature simplified, expressive features with
-                    slightly larger eyes and natural proportions that maintain
-                    human realism.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Card sx={{ height: '100%' }}>
-                <CardMedia
-                  component='img'
-                  height='140'
-                  image='https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=500&auto=format&fit=crop'
-                  alt='Ghibli style example'
-                />
-                <CardContent>
-                  <Typography gutterBottom variant='h6' component='div'>
-                    Magical Atmosphere
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    Environments often include magical elements like floating
-                    particles, dream-like lighting, and rich atmospheric
-                    details.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Box>
       </Container>
 
       <ProviderKeyModal
