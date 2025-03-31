@@ -9,8 +9,7 @@ export async function GET(request: Request) {
 
   if (code) {
     // Create a Supabase client using the route handler
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = createRouteHandlerClient({ cookies })
 
     // Exchange the code for a session
     await supabase.auth.exchangeCodeForSession(code)

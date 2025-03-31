@@ -10,11 +10,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export type UserProfile = {
   id: string
   email: string
-  display_name?: string
+  full_name?: string
   avatar_url?: string
-  free_generations_used: number
-  subscription_tier: 'free' | 'basic' | 'premium' | 'ultimate'
-  custom_api_key?: string
+  plan: 'free' | 'basic' | 'premium' | 'ultimate'
+  credits: number
+  last_renewal?: string
+  next_renewal?: string
   provider_keys?: {
     openai?: string
     stability?: string

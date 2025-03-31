@@ -2,7 +2,6 @@
 
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
-import { supabase } from '@/lib/supabase'
 import {
   Email,
   Google,
@@ -62,39 +61,26 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      // Create the user
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+      // Use the server-side API endpoint for registration
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      })
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-      if (signUpError) {
-        throw signUpError
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to sign up');
       }
 
-      // Create a profile entry for the user with free image usage tracking
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert([
-          {
-            id: data.user.id,
-            email: email,
-            free_generations_used: 0,
-            subscription_tier: 'free',
-          },
-        ])
-
-        if (profileError) {
-          setError(`Error creating profile: ${profileError.message}`)
-          return
-        }
-      }
-
-      setSuccess(
-        'Registration successful! Please check your email to confirm your account.',
-      )
+      setSuccess(data.message || 'Registration successful! Please check your email to confirm your account.');
+      
       setTimeout(() => {
         router.push('/auth/signin')
       }, 5000)
@@ -110,18 +96,18 @@ export default function SignUp() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
+      // Redirect to Google OAuth sign-in
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+      });
 
-      if (error) {
-        throw error
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to sign up with Google');
       }
 
-      // No need to redirect, the OAuth flow handles this
+      const { url } = await response.json();
+      window.location.href = url;
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign up with Google')
       setLoading(false)
