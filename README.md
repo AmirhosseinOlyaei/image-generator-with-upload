@@ -24,21 +24,25 @@ Ghibli Vision is a Next.js application that transforms user-uploaded photos into
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd image-generator-with-upload
    ```
 
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Set up environment variables:
+
    - Copy `.env.local.example` to `.env.local`
    - Fill in your Supabase credentials and AI provider API keys
 
 4. Set up Supabase:
+
    - Create a new Supabase project
    - Enable Email and Google authentication providers
    - Create a `profiles` table with the following schema:
@@ -56,6 +60,7 @@ Ghibli Vision is a Next.js application that transforms user-uploaded photos into
      ```
 
 5. Run the development server:
+
    ```bash
    pnpm dev
    ```

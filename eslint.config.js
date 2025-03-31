@@ -1,7 +1,7 @@
-import nextjs from '@next/eslint-plugin-next';
-import js from '@eslint/js';
-import typescript from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
+import js from '@eslint/js'
+import nextjs from '@next/eslint-plugin-next'
+import typescript from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
 
 export default [
   js.configs.recommended,
@@ -9,7 +9,7 @@ export default [
     files: ['**/*.{ts,tsx,js,jsx}'],
     plugins: {
       '@typescript-eslint': typescript,
-      '@next/next': nextjs
+      '@next/next': nextjs,
     },
     languageOptions: {
       parser: tsParser,
@@ -17,8 +17,8 @@ export default [
         ecmaVersion: 'latest',
         sourceType: 'module',
         ecmaFeatures: {
-          jsx: true
-        }
+          jsx: true,
+        },
       },
       globals: {
         // Browser globals
@@ -40,15 +40,18 @@ export default [
         process: 'readonly',
         console: 'readonly',
         module: 'readonly',
-        require: 'readonly'
-      }
+        require: 'readonly',
+      },
     },
     rules: {
       'react/no-unescaped-entities': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_' },
+      ],
       'no-console': 'warn',
-      'no-undef': 'error'
-    }
-  }
-];
+      'no-undef': 'error',
+    },
+  },
+]

@@ -1,15 +1,15 @@
-'use client';
+'use client'
 
-import * as React from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { Roboto } from 'next/font/google';
+import CssBaseline from '@mui/material/CssBaseline'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { Roboto } from 'next/font/google'
+import * as React from 'react'
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
   display: 'swap',
-});
+})
 
 // Create a custom theme inspired by Studio Ghibli's color palette
 const theme = createTheme({
@@ -89,13 +89,17 @@ const theme = createTheme({
       },
     },
   },
-});
+})
 
-export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
+export default function ThemeRegistry({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       {children}
     </ThemeProvider>
-  );
+  )
 }

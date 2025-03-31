@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew"
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import {
   Box,
   Card,
@@ -11,49 +11,49 @@ import {
   Grid,
   IconButton,
   Typography,
-} from "@mui/material"
-import { useState } from "react"
+} from '@mui/material'
+import { useState } from 'react'
 
 // Sample Ghibli images data with descriptions
 const ghibliSamples = [
   {
     id: 1,
-    title: "Spirited Away Landscape",
-    description: "Inspired by the surreal bathhouse landscape in Spirited Away",
-    image: "/images/spirited-away.jpg",
+    title: 'Spirited Away Landscape',
+    description: 'Inspired by the surreal bathhouse landscape in Spirited Away',
+    image: '/images/spirited-away.jpg',
   },
   {
     id: 2,
-    title: "My Neighbor Totoro",
+    title: 'My Neighbor Totoro',
     description:
-      "Featuring the iconic forest spirits and lush greenery from Totoro",
-    image: "/images/totoro-and-kids-in-studio-ghiblis-my-neighbor-totoro.avif",
+      'Featuring the iconic forest spirits and lush greenery from Totoro',
+    image: '/images/totoro-and-kids-in-studio-ghiblis-my-neighbor-totoro.avif',
   },
   {
     id: 3,
     title: "Howl's Moving Castle",
     description: "Showcasing the steampunk-inspired design of Howl's castle",
-    image: "/images/ghibli-sample-3.webp",
+    image: '/images/ghibli-sample-3.webp',
   },
   {
     id: 4,
-    title: "Princess Mononoke",
+    title: 'Princess Mononoke',
     description:
-      "Capturing the mystical forest and creatures from Princess Mononoke",
-    image: "/images/princess-mononoke.jpg",
+      'Capturing the mystical forest and creatures from Princess Mononoke',
+    image: '/images/princess-mononoke.jpg',
   },
   {
     id: 5,
     title: "Kiki's Delivery Service",
     description:
       "Featuring the charming European-inspired town from Kiki's adventures",
-    image: "/images/kiki-delivery-services-mirror.avif",
+    image: '/images/kiki-delivery-services-mirror.avif',
   },
   {
     id: 6,
-    title: "Ponyo Seascape",
-    description: "Displaying the vibrant underwater world from Ponyo",
-    image: "/images/ponyo-1.webp",
+    title: 'Ponyo Seascape',
+    description: 'Displaying the vibrant underwater world from Ponyo',
+    image: '/images/ponyo-1.webp',
   },
 ]
 
@@ -62,65 +62,65 @@ export default function GhibliShowcase() {
   const itemsToShow = 3 // Number of cards to show at once
 
   const handlePrevious = () => {
-    setStartIndex((prev) =>
-      prev > 0 ? prev - 1 : ghibliSamples.length - itemsToShow
+    setStartIndex(prev =>
+      prev > 0 ? prev - 1 : ghibliSamples.length - itemsToShow,
     )
   }
 
   const handleNext = () => {
-    setStartIndex((prev) =>
-      prev < ghibliSamples.length - itemsToShow ? prev + 1 : 0
+    setStartIndex(prev =>
+      prev < ghibliSamples.length - itemsToShow ? prev + 1 : 0,
     )
   }
 
   // Get the current items to display
   const currentItems = [...ghibliSamples, ...ghibliSamples].slice(
     startIndex,
-    startIndex + itemsToShow
+    startIndex + itemsToShow,
   )
 
   return (
-    <Box sx={{ py: 10, bgcolor: "#F7F9FA" }}>
-      <Container maxWidth="lg">
+    <Box sx={{ py: 10, bgcolor: '#F7F9FA' }}>
+      <Container maxWidth='lg'>
         <Typography
-          variant="h2"
-          component="h2"
-          align="center"
+          variant='h2'
+          component='h2'
+          align='center'
           sx={{
             mb: 2,
-            color: "primary.dark",
-            fontWeight: "bold",
+            color: 'primary.dark',
+            fontWeight: 'bold',
           }}
         >
           Ghibli-Inspired Masterpieces
         </Typography>
 
         <Typography
-          variant="h5"
-          component="p"
-          align="center"
+          variant='h5'
+          component='p'
+          align='center'
           sx={{
             mb: 6,
-            color: "text.secondary",
+            color: 'text.secondary',
             maxWidth: 800,
-            mx: "auto",
+            mx: 'auto',
           }}
         >
           Explore the enchanting world of Studio Ghibli and see how your photos
           can be transformed
         </Typography>
 
-        <Box sx={{ position: "relative", px: { xs: 2, md: 6 } }}>
+        <Box sx={{ position: 'relative', px: { xs: 2, md: 6 } }}>
           <IconButton
             onClick={handlePrevious}
             sx={{
-              position: "absolute",
+              position: 'absolute',
               left: 0,
-              top: "50%",
-              transform: "translateY(-50%)",
-              bgcolor: "background.paper",
+              top: '50%',
+              transform: 'translateY(-50%)',
+              bgcolor: 'background.paper',
               boxShadow: 2,
-              "&:hover": { bgcolor: "background.paper", opacity: 0.9 },
+              '&:hover': { bgcolor: 'background.paper', opacity: 0.9 },
             }}
           >
             <ArrowBackIosNewIcon />
@@ -131,33 +131,33 @@ export default function GhibliShowcase() {
               <Grid item xs={12} md={4} key={`${item.id}-${index}`}>
                 <Card
                   sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    transition: "transform 0.3s",
-                    "&:hover": {
-                      transform: "translateY(-8px)",
-                      boxShadow: "0 16px 30px rgba(0,0,0,0.1)",
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform 0.3s',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 16px 30px rgba(0,0,0,0.1)',
                     },
                   }}
                 >
                   <CardMedia
-                    component="img"
-                    height="300"
+                    component='img'
+                    height='300'
                     image={item.image}
                     alt={item.title}
-                    sx={{ objectFit: "cover" }}
+                    sx={{ objectFit: 'cover' }}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography
                       gutterBottom
-                      variant="h5"
-                      component="h3"
-                      sx={{ fontWeight: "bold" }}
+                      variant='h5'
+                      component='h3'
+                      sx={{ fontWeight: 'bold' }}
                     >
                       {item.title}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography variant='body1' color='text.secondary'>
                       {item.description}
                     </Typography>
                   </CardContent>
@@ -169,13 +169,13 @@ export default function GhibliShowcase() {
           <IconButton
             onClick={handleNext}
             sx={{
-              position: "absolute",
+              position: 'absolute',
               right: 0,
-              top: "50%",
-              transform: "translateY(-50%)",
-              bgcolor: "background.paper",
+              top: '50%',
+              transform: 'translateY(-50%)',
+              bgcolor: 'background.paper',
               boxShadow: 2,
-              "&:hover": { bgcolor: "background.paper", opacity: 0.9 },
+              '&:hover': { bgcolor: 'background.paper', opacity: 0.9 },
             }}
           >
             <ArrowForwardIosIcon />

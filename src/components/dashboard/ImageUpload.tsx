@@ -1,101 +1,104 @@
-'use client';
+'use client'
 
-import { useState, useRef } from 'react';
-import { Box, Button, Typography, CircularProgress } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Image from 'next/image';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import DeleteIcon from '@mui/icons-material/Delete'
+import { Box, Button, CircularProgress, Typography } from '@mui/material'
+import Image from 'next/image'
+import { useRef, useState } from 'react'
 
 interface ImageUploadProps {
-  onFileSelected: (file: File) => void;
-  imagePreview: string | null;
+  onFileSelected: (file: File) => void
+  imagePreview: string | null
 }
 
-export default function ImageUpload({ onFileSelected, imagePreview }: ImageUploadProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
+export default function ImageUpload({
+  onFileSelected,
+  imagePreview,
+}: ImageUploadProps) {
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+    const files = event.target.files
     if (files && files.length > 0) {
-      handleUpload(files[0]);
+      handleUpload(files[0])
     }
-  };
-  
+  }
+
   const handleUpload = async (file: File) => {
     // Validate file type
     if (!file.type.match('image.*')) {
-      alert('Please select an image file');
-      return;
+      alert('Please select an image file')
+      return
     }
-    
-    setUploading(true);
-    
+
+    setUploading(true)
+
     try {
       // Process the file (in a real app, you might want to resize/compress it here)
       // For now, just simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      onFileSelected(file);
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      onFileSelected(file)
     } catch (error) {
-      console.error('Error processing file:', error);
+      console.error('Error processing file:', error)
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
-  
+  }
+
   const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-  
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-  
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    
-    const files = e.dataTransfer.files;
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      handleUpload(files[0]);
+      handleUpload(files[0])
     }
-  };
-  
+  }
+
   const handleButtonClick = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.click();
+      fileInputRef.current.click()
     }
-  };
-  
+  }
+
   const handleClearImage = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = ''
     }
-    onFileSelected(null as any);
-  };
-  
+    onFileSelected(null as any)
+  }
+
   return (
     <Box sx={{ width: '100%' }}>
       <input
-        type="file"
-        accept="image/*"
+        type='file'
+        accept='image/*'
         onChange={handleFileSelect}
         ref={fileInputRef}
         style={{ display: 'none' }}
       />
-      
+
       {imagePreview ? (
         <Box sx={{ position: 'relative', width: '100%', mt: 2 }}>
           <Box
@@ -110,25 +113,27 @@ export default function ImageUpload({ onFileSelected, imagePreview }: ImageUploa
           >
             <Image
               src={imagePreview}
-              alt="Uploaded preview"
+              alt='Uploaded preview'
               fill
               style={{ objectFit: 'contain' }}
             />
           </Box>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 2 }}>
+
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 2 }}
+          >
             <Button
-              variant="outlined"
-              color="primary"
+              variant='outlined'
+              color='primary'
               startIcon={<CloudUploadIcon />}
               onClick={handleButtonClick}
             >
               Change Image
             </Button>
-            
+
             <Button
-              variant="outlined"
-              color="error"
+              variant='outlined'
+              color='error'
               startIcon={<DeleteIcon />}
               onClick={handleClearImage}
             >
@@ -144,7 +149,9 @@ export default function ImageUpload({ onFileSelected, imagePreview }: ImageUploa
             borderRadius: 2,
             p: 4,
             textAlign: 'center',
-            backgroundColor: isDragging ? 'rgba(77, 124, 138, 0.08)' : 'transparent',
+            backgroundColor: isDragging
+              ? 'rgba(77, 124, 138, 0.08)'
+              : 'transparent',
             transition: 'background-color 0.3s, border-color 0.3s',
             cursor: 'pointer',
             minHeight: 200,
@@ -163,17 +170,21 @@ export default function ImageUpload({ onFileSelected, imagePreview }: ImageUploa
             <CircularProgress />
           ) : (
             <>
-              <CloudUploadIcon color="primary" sx={{ fontSize: 48, mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
+              <CloudUploadIcon color='primary' sx={{ fontSize: 48, mb: 2 }} />
+              <Typography variant='h6' gutterBottom>
                 Drag & Drop your image here
               </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 or
               </Typography>
-              <Button variant="contained" color="primary" component="span">
+              <Button variant='contained' color='primary' component='span'>
                 Browse Files
               </Button>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ mt: 2 }}
+              >
                 Supported formats: JPEG, PNG, WebP
               </Typography>
             </>
@@ -181,5 +192,5 @@ export default function ImageUpload({ onFileSelected, imagePreview }: ImageUploa
         </Box>
       )}
     </Box>
-  );
+  )
 }

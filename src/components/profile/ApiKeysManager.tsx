@@ -1,34 +1,33 @@
-"use client"
+'use client'
 
-import React, { useState, useEffect } from "react"
+import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '@/hooks/useAuth'
 import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Divider,
-  CircularProgress,
-  Alert,
-  IconButton,
-  InputAdornment,
-  Grid,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Link,
-} from "@mui/material"
-import {
-  Key as KeyIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  Save as SaveIcon,
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
-  HelpOutline as HelpIcon,
-} from "@mui/icons-material"
-import { useAuth } from "@/hooks/useAuth"
-import { useApp } from "@/contexts/AppContext"
+  Key as KeyIcon,
+  Save as SaveIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from '@mui/icons-material'
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Link,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { useEffect, useState } from 'react'
 
 // Define the structure for provider information
 interface ProviderInfo {
@@ -43,37 +42,37 @@ interface ProviderInfo {
 // List of supported providers
 const PROVIDERS: ProviderInfo[] = [
   {
-    id: "openai",
-    name: "OpenAI DALL-E",
+    id: 'openai',
+    name: 'OpenAI DALL-E',
     description: "Generate Ghibli-style art using OpenAI's DALL-E model",
-    apiKeyUrl: "https://platform.openai.com/api-keys",
-    docUrl: "https://platform.openai.com/docs/guides/images",
-    placeholder: "sk-...",
+    apiKeyUrl: 'https://platform.openai.com/api-keys',
+    docUrl: 'https://platform.openai.com/docs/guides/images',
+    placeholder: 'sk-...',
   },
   {
-    id: "stability",
-    name: "Stability AI",
+    id: 'stability',
+    name: 'Stability AI',
     description:
       "Transform your images with Stability AI's Stable Diffusion models",
-    apiKeyUrl: "https://platform.stability.ai/account/keys",
-    docUrl: "https://platform.stability.ai/docs/getting-started",
-    placeholder: "sk-...",
+    apiKeyUrl: 'https://platform.stability.ai/account/keys',
+    docUrl: 'https://platform.stability.ai/docs/getting-started',
+    placeholder: 'sk-...',
   },
   {
-    id: "midjourney",
-    name: "Midjourney",
+    id: 'midjourney',
+    name: 'Midjourney',
     description: "Create Ghibli art in Midjourney's distinctive style",
-    apiKeyUrl: "https://www.midjourney.com/account/",
-    docUrl: "https://docs.midjourney.com/docs",
-    placeholder: "mj-...",
+    apiKeyUrl: 'https://www.midjourney.com/account/',
+    docUrl: 'https://docs.midjourney.com/docs',
+    placeholder: 'mj-...',
   },
   {
-    id: "leonardo",
-    name: "Leonardo AI",
+    id: 'leonardo',
+    name: 'Leonardo AI',
     description: "Use Leonardo AI's powerful image generation capabilities",
-    apiKeyUrl: "https://app.leonardo.ai/account/api-keys",
-    docUrl: "https://docs.leonardo.ai/",
-    placeholder: "leo-...",
+    apiKeyUrl: 'https://app.leonardo.ai/account/api-keys',
+    docUrl: 'https://docs.leonardo.ai/',
+    placeholder: 'leo-...',
   },
 ]
 
@@ -93,9 +92,9 @@ export default function ApiKeysManager() {
     const initialKeys: Record<string, string> = {}
     const initialShowKey: Record<string, boolean> = {}
 
-    PROVIDERS.forEach((provider) => {
+    PROVIDERS.forEach(provider => {
       initialKeys[provider.id] =
-        providerKeys[provider.id as keyof typeof providerKeys] || ""
+        providerKeys[provider.id as keyof typeof providerKeys] || ''
       initialShowKey[provider.id] = false
     })
 
@@ -105,14 +104,14 @@ export default function ApiKeysManager() {
 
   // Handle key change
   const handleKeyChange = (providerId: string, value: string) => {
-    setKeys((prev) => ({
+    setKeys(prev => ({
       ...prev,
       [providerId]: value,
     }))
 
     // Clear error when user types
     if (errors[providerId]) {
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         [providerId]: null,
       }))
@@ -121,7 +120,7 @@ export default function ApiKeysManager() {
 
   // Toggle key visibility
   const toggleKeyVisibility = (providerId: string) => {
-    setShowKey((prev) => ({
+    setShowKey(prev => ({
       ...prev,
       [providerId]: !prev[providerId],
     }))
@@ -130,12 +129,12 @@ export default function ApiKeysManager() {
   // Save API key
   const handleSaveKey = async (providerId: string) => {
     try {
-      setLoading((prev) => ({
+      setLoading(prev => ({
         ...prev,
         [providerId]: true,
       }))
 
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         [providerId]: null,
       }))
@@ -143,24 +142,24 @@ export default function ApiKeysManager() {
       // Validate key format
       const key = keys[providerId].trim()
       if (!key) {
-        throw new Error("API key cannot be empty")
+        throw new Error('API key cannot be empty')
       }
 
       // Validate provider-specific key format
-      const provider = PROVIDERS.find((p) => p.id === providerId)
+      const provider = PROVIDERS.find(p => p.id === providerId)
       if (provider) {
         // Simple prefix validation
         const prefixMap: Record<string, string> = {
-          openai: "sk-",
-          stability: "sk-",
-          midjourney: "mj-",
-          leonardo: "leo-",
+          openai: 'sk-',
+          stability: 'sk-',
+          midjourney: 'mj-',
+          leonardo: 'leo-',
         }
 
         const expectedPrefix = prefixMap[providerId]
         if (expectedPrefix && !key.startsWith(expectedPrefix)) {
           throw new Error(
-            `Invalid ${provider.name} API key format. Should start with "${expectedPrefix}"`
+            `Invalid ${provider.name} API key format. Should start with "${expectedPrefix}"`,
           )
         }
       }
@@ -169,21 +168,21 @@ export default function ApiKeysManager() {
       await setProviderKey(providerId as keyof typeof providerKeys, key)
 
       addNotification({
-        message: `${provider?.name || "API"} key saved successfully`,
-        type: "success",
+        message: `${provider?.name || 'API'} key saved successfully`,
+        type: 'success',
       })
     } catch (error: any) {
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         [providerId]: error.message || `Failed to save ${providerId} API key`,
       }))
 
       addNotification({
         message: error.message || `Failed to save ${providerId} API key`,
-        type: "error",
+        type: 'error',
       })
     } finally {
-      setLoading((prev) => ({
+      setLoading(prev => ({
         ...prev,
         [providerId]: false,
       }))
@@ -193,12 +192,12 @@ export default function ApiKeysManager() {
   // Remove API key
   const handleRemoveKey = async (providerId: string) => {
     try {
-      setLoading((prev) => ({
+      setLoading(prev => ({
         ...prev,
         [providerId]: true,
       }))
 
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         [providerId]: null,
       }))
@@ -207,28 +206,28 @@ export default function ApiKeysManager() {
       await removeProviderKey(providerId as keyof typeof providerKeys)
 
       // Clear the input field
-      setKeys((prev) => ({
+      setKeys(prev => ({
         ...prev,
-        [providerId]: "",
+        [providerId]: '',
       }))
 
-      const provider = PROVIDERS.find((p) => p.id === providerId)
+      const provider = PROVIDERS.find(p => p.id === providerId)
       addNotification({
-        message: `${provider?.name || "API"} key removed successfully`,
-        type: "info",
+        message: `${provider?.name || 'API'} key removed successfully`,
+        type: 'info',
       })
     } catch (error: any) {
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         [providerId]: error.message || `Failed to remove ${providerId} API key`,
       }))
 
       addNotification({
         message: error.message || `Failed to remove ${providerId} API key`,
-        type: "error",
+        type: 'error',
       })
     } finally {
-      setLoading((prev) => ({
+      setLoading(prev => ({
         ...prev,
         [providerId]: false,
       }))
@@ -237,66 +236,66 @@ export default function ApiKeysManager() {
 
   if (!user) {
     return (
-      <Alert severity="warning">Please sign in to manage your API keys</Alert>
+      <Alert severity='warning'>Please sign in to manage your API keys</Alert>
     )
   }
 
   return (
     <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
       <Typography
-        variant="h5"
+        variant='h5'
         gutterBottom
-        sx={{ display: "flex", alignItems: "center", mb: 3 }}
+        sx={{ display: 'flex', alignItems: 'center', mb: 3 }}
       >
         <KeyIcon sx={{ mr: 1 }} />
         Manage API Keys
       </Typography>
 
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert severity='info' sx={{ mb: 3 }}>
         Add your own API keys to use when you exceed the free limit. Your keys
         are securely stored and encrypted.
       </Alert>
 
       <Grid container spacing={2}>
-        {PROVIDERS.map((provider) => (
-          <Grid key={provider.id} sx={{ gridColumn: { xs: "span 12" } }}>
+        {PROVIDERS.map(provider => (
+          <Grid key={provider.id} sx={{ gridColumn: { xs: 'span 12' } }}>
             <Accordion sx={{ mb: 2 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: "medium" }}>
+                <Typography sx={{ fontWeight: 'medium' }}>
                   {provider.name}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
-                  <Grid sx={{ gridColumn: { xs: "span 12" } }}>
+                  <Grid sx={{ gridColumn: { xs: 'span 12' } }}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       paragraph
                     >
                       {provider.description}
                     </Typography>
                   </Grid>
 
-                  <Grid sx={{ gridColumn: { xs: "span 12" } }}>
+                  <Grid sx={{ gridColumn: { xs: 'span 12' } }}>
                     <TextField
                       fullWidth
                       label={`${provider.name} API Key`}
                       placeholder={provider.placeholder}
-                      value={keys[provider.id] || ""}
-                      onChange={(e) =>
+                      value={keys[provider.id] || ''}
+                      onChange={e =>
                         handleKeyChange(provider.id, e.target.value)
                       }
-                      type={showKey[provider.id] ? "text" : "password"}
+                      type={showKey[provider.id] ? 'text' : 'password'}
                       error={Boolean(errors[provider.id])}
-                      helperText={errors[provider.id] || ""}
+                      helperText={errors[provider.id] || ''}
                       InputProps={{
                         endAdornment: (
-                          <InputAdornment position="end">
+                          <InputAdornment position='end'>
                             <IconButton
-                              aria-label="toggle key visibility"
+                              aria-label='toggle key visibility'
                               onClick={() => toggleKeyVisibility(provider.id)}
-                              edge="end"
+                              edge='end'
                             >
                               {showKey[provider.id] ? (
                                 <VisibilityOffIcon />
@@ -310,21 +309,21 @@ export default function ApiKeysManager() {
                     />
                   </Grid>
 
-                  <Grid sx={{ gridColumn: { xs: "span 12", sm: "span 6" } }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body2">Get your key:</Typography>
+                  <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant='body2'>Get your key:</Typography>
                       <Link
                         href={provider.apiKeyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target='_blank'
+                        rel='noopener noreferrer'
                       >
                         {provider.name} Dashboard
                       </Link>
-                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <Divider orientation='vertical' flexItem sx={{ mx: 1 }} />
                       <Link
                         href={provider.docUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target='_blank'
+                        rel='noopener noreferrer'
                       >
                         API Docs
                       </Link>
@@ -333,15 +332,15 @@ export default function ApiKeysManager() {
 
                   <Grid
                     sx={{
-                      gridColumn: { xs: "span 12", sm: "span 6" },
-                      display: "flex",
-                      justifyContent: "flex-end",
+                      gridColumn: { xs: 'span 12', sm: 'span 6' },
+                      display: 'flex',
+                      justifyContent: 'flex-end',
                       gap: 2,
                     }}
                   >
                     <Button
-                      variant="outlined"
-                      color="error"
+                      variant='outlined'
+                      color='error'
                       startIcon={
                         loading[provider.id] ? (
                           <CircularProgress size={20} />
@@ -358,7 +357,7 @@ export default function ApiKeysManager() {
                       Remove
                     </Button>
                     <Button
-                      variant="contained"
+                      variant='contained'
                       startIcon={
                         loading[provider.id] ? (
                           <CircularProgress size={20} />
@@ -380,10 +379,10 @@ export default function ApiKeysManager() {
       </Grid>
 
       <Box sx={{ mt: 4 }}>
-        <Typography variant="subtitle2" gutterBottom>
+        <Typography variant='subtitle2' gutterBottom>
           Key Usage & Security
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant='body2' color='text.secondary'>
           Your API keys are encrypted before being stored in our database. They
           are only used to generate images when you use our service. You'll be
           charged directly by the respective AI providers according to their

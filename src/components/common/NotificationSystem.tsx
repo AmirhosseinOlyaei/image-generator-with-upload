@@ -1,35 +1,37 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { 
-  Alert, 
-  Snackbar, 
-  Stack,
+import { useApp } from '@/contexts/AppContext'
+import CloseIcon from '@mui/icons-material/Close'
+import {
+  Alert,
   IconButton,
   Slide,
-  SlideProps
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { useApp } from '@/contexts/AppContext';
+  SlideProps,
+  Snackbar,
+  Stack,
+} from '@mui/material'
 
 // Define the slide transition
 function SlideTransition(props: SlideProps) {
-  return <Slide {...props} direction="right" />;
+  return <Slide {...props} direction='right' />
 }
 
 export default function NotificationSystem() {
-  const { notifications, removeNotification } = useApp();
+  const { notifications, removeNotification } = useApp()
 
   return (
-    <Stack spacing={2} sx={{ 
-      position: 'fixed', 
-      bottom: 24, 
-      right: 24, 
-      maxWidth: '90%',
-      width: 350,
-      zIndex: 2000 
-    }}>
-      {notifications.map((notification) => (
+    <Stack
+      spacing={2}
+      sx={{
+        position: 'fixed',
+        bottom: 24,
+        right: 24,
+        maxWidth: '90%',
+        width: 350,
+        zIndex: 2000,
+      }}
+    >
+      {notifications.map(notification => (
         <Snackbar
           key={notification.id}
           open={true}
@@ -38,16 +40,16 @@ export default function NotificationSystem() {
         >
           <Alert
             severity={notification.type}
-            variant="filled"
+            variant='filled'
             sx={{ width: '100%' }}
             action={
               <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
+                aria-label='close'
+                color='inherit'
+                size='small'
                 onClick={() => removeNotification(notification.id)}
               >
-                <CloseIcon fontSize="small" />
+                <CloseIcon fontSize='small' />
               </IconButton>
             }
           >
@@ -56,5 +58,5 @@ export default function NotificationSystem() {
         </Snackbar>
       ))}
     </Stack>
-  );
-};
+  )
+}
