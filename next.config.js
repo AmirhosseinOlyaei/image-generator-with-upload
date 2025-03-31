@@ -49,10 +49,17 @@ const nextConfig = {
           lib: {
             test: /[\\/]node_modules[\\/]/,
             name(module) {
-              const packageName = module.context.match(
+              // Safely handle module context that might be null
+              if (!module.context) {
+                return 'npm.unknown'
+              }
+              const match = module.context.match(
                 /[\\/]node_modules[\\/](.*?)([\\/]|$)/,
-              )[1]
-              return `npm.${packageName.replace('@', '')}`
+              )
+              if (!match || !match[1]) {
+                return 'npm.unknown'
+              }
+              return `npm.${match[1].replace('@', '')}`
             },
             priority: 30,
             minChunks: 1,
