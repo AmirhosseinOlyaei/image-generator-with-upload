@@ -330,7 +330,8 @@ export default function SignUp() {
               size='large'
               startIcon={<Google />}
               onClick={handleGoogleSignUp}
-              disabled={loading}
+              // disabled={loading}
+              disabled={true}
               sx={{
                 py: 1.5,
                 borderWidth: 2,
