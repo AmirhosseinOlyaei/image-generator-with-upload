@@ -71,16 +71,19 @@ export default function SignUp() {
           email,
           password,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to sign up');
+        throw new Error(data.error || 'Failed to sign up')
       }
 
-      setSuccess(data.message || 'Registration successful! Please check your email to confirm your account.');
-      
+      setSuccess(
+        data.message ||
+          'Registration successful! Please check your email to confirm your account.',
+      )
+
       setTimeout(() => {
         router.push('/auth/signin')
       }, 5000)
@@ -99,17 +102,21 @@ export default function SignUp() {
       // Redirect to Google OAuth sign-in
       const response = await fetch('/api/auth/google', {
         method: 'POST',
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to sign up with Google');
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to sign up with Google')
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const { url } = await response.json()
+      window.location.href = url
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to sign up with Google')
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to sign up with Google',
+      )
       setLoading(false)
     }
   }

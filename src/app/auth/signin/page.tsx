@@ -80,7 +80,11 @@ export default function SignIn() {
 
       // No need to redirect, the OAuth flow handles this
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to sign in with Google')
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to sign in with Google',
+      )
       setLoading(false)
     }
   }

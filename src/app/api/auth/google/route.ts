@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: data.url })
   } catch (error) {
     // Use a type guard to check if error is an Error object
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred'
     return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

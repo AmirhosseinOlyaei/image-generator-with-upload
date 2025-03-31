@@ -28,28 +28,28 @@ export const useAuth = () => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-        
+        .single()
+
       if (error) {
         // Just return null for any error - don't throw or log
-        return null;
+        return null
       }
-      
-      return data;
+
+      return data
     } catch (err) {
       // Just return null for any error - don't throw or log
-      return null;
+      return null
     }
-  };
+  }
 
   // Check if the user is authenticated and load profile data
   useEffect(() => {
-    let mounted = true;
-    
+    let mounted = true
+
     const fetchUserData = async () => {
       try {
-        setState(prev => ({ ...prev, loading: true }));
-        
+        setState(prev => ({ ...prev, loading: true }))
+
         // Get current session
         const {
           data: { session },
@@ -68,7 +68,7 @@ export const useAuth = () => {
         }
 
         // Only fetch profile, don't try to create it
-        const profileData = await fetchProfile(session.user.id);
+        const profileData = await fetchProfile(session.user.id)
 
         if (mounted) {
           setState({
@@ -79,7 +79,10 @@ export const useAuth = () => {
           })
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching user data'
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'An error occurred while fetching user data'
         if (mounted) {
           setState({
             user: null,
@@ -101,7 +104,7 @@ export const useAuth = () => {
         if (session) {
           try {
             // Only fetch profile, don't try to create it
-            const profileData = await fetchProfile(session.user.id);
+            const profileData = await fetchProfile(session.user.id)
 
             if (mounted) {
               setState({
@@ -110,19 +113,20 @@ export const useAuth = () => {
                 loading: false,
                 error: null,
               })
-              
+
               // Force router refresh to update components that depend on auth state
               router.refresh()
             }
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to load profile';
+            const errorMessage =
+              error instanceof Error ? error.message : 'Failed to load profile'
             if (mounted) {
               setState({
                 user: session.user,
                 profile: null,
                 loading: false,
                 error: errorMessage,
-              });
+              })
             }
           }
         }
@@ -138,7 +142,7 @@ export const useAuth = () => {
     })
 
     return () => {
-      mounted = false;
+      mounted = false
       subscription.unsubscribe()
     }
   }, [supabase, router])
@@ -166,10 +170,11 @@ export const useAuth = () => {
         router.push('/dashboard')
         router.refresh()
       }, 300)
-      
+
       return true
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to sign in'
       setState({
         ...state,
         loading: false,
@@ -195,7 +200,8 @@ export const useAuth = () => {
       }
       return true
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in with Google'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to sign in with Google'
       setState({
         ...state,
         loading: false,
@@ -235,10 +241,11 @@ export const useAuth = () => {
         router.push('/dashboard')
         router.refresh()
       }, 300)
-      
+
       return true
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign up'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to sign up'
       setState({
         ...state,
         loading: false,
@@ -265,13 +272,14 @@ export const useAuth = () => {
         loading: false,
         error: null,
       })
-      
+
       // Redirect to homepage and force refresh
       router.push('/')
       router.refresh()
       return true
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign out'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to sign out'
       setState({
         ...state,
         loading: false,
@@ -319,7 +327,8 @@ export const useAuth = () => {
 
       return true
     } catch (error: Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to update profile'
       setState({
         ...state,
         loading: false,
