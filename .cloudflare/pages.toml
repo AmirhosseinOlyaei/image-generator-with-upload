@@ -2,10 +2,9 @@
 # This file helps optimize your Next.js application for Cloudflare Pages
 
 # Set build output directory
-build.output_directory = "out"
-
-# Configure build command
-build.command = "pnpm cloudflare:build"
+[build]
+output_directory = ".cloudflare/deploy"
+command = "node cloudflare-build.js"
 
 # Configure compatibility date
 compatibility_date = "2024-03-31"

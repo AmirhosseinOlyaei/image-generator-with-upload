@@ -11,7 +11,7 @@ console.log('🚀 Starting optimized build for Cloudflare Pages...')
 
 // Step 1: Clean any previous build artifacts
 console.log('🧹 Cleaning previous build artifacts...')
-const dirsToClean = ['.next', 'out', '.vercel']
+const dirsToClean = ['.next', 'out', '.vercel', '.cloudflare/deploy']
 dirsToClean.forEach(dir => {
   const dirPath = path.resolve(process.cwd(), dir)
   if (fs.existsSync(dirPath)) {
@@ -20,55 +20,101 @@ dirsToClean.forEach(dir => {
   }
 })
 
-// Step 2: Run the Next.js build with minimal configuration
-console.log('📦 Building Next.js application...')
-try {
-  // Run the build
-  execSync('next build', { stdio: 'inherit' })
-  console.log('✅ Build completed successfully!')
-} catch (error) {
-  console.error('❌ Build failed:', error)
-  process.exit(1)
-}
-
-// Step 3: Create a minimal deployment package for Cloudflare Pages
-console.log('📦 Creating deployment package for Cloudflare Pages...')
+// Step 2: Create a minimal static site without using Next.js build
+console.log('📦 Creating minimal static site for Cloudflare Pages...')
 
 // Create deployment directory
 const deployDir = '.cloudflare/deploy'
-if (fs.existsSync(deployDir)) {
-  fs.rmSync(deployDir, { recursive: true, force: true })
-}
 fs.mkdirSync(deployDir, { recursive: true })
 
-// Copy only the essential files
-console.log('📋 Copying essential files...')
-
 // Copy public directory
-execSync(`cp -R public ${deployDir}/`, { stdio: 'inherit' })
-
-// Copy .next/static to _next/static
-fs.mkdirSync(`${deployDir}/_next/static`, { recursive: true })
-execSync(`cp -R .next/static/* ${deployDir}/_next/static/`, {
+console.log('📋 Copying public assets...')
+execSync(`cp -R public/* ${deployDir}/`, {
   stdio: 'inherit',
 })
 
-// Create a simple index.html file
-const indexHtml = `
+// Create HTML files for each route
+const routes = [
+  { path: 'index.html', title: 'Ghibli Vision - Transform Your Photos' },
+  { path: 'dashboard/index.html', title: 'Dashboard - Ghibli Vision' },
+  { path: 'auth/signin/index.html', title: 'Sign In - Ghibli Vision' },
+  { path: 'auth/signup/index.html', title: 'Sign Up - Ghibli Vision' },
+  { path: 'profile/index.html', title: 'Profile - Ghibli Vision' },
+  { path: 'pricing/index.html', title: 'Pricing - Ghibli Vision' },
+  { path: 'terms/index.html', title: 'Terms - Ghibli Vision' },
+  { path: 'privacy/index.html', title: 'Privacy - Ghibli Vision' },
+  { path: 'cookies/index.html', title: 'Cookies - Ghibli Vision' },
+]
+
+console.log('📝 Creating HTML files...')
+routes.forEach(route => {
+  const dirPath = path.dirname(path.join(deployDir, route.path))
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true })
+  }
+
+  const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ghibli Vision</title>
-  <meta http-equiv="refresh" content="0;url=/dashboard" />
+  <title>${route.title}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+    }
+    h1 {
+      color: #333;
+    }
+    p {
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+    .button {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      margin: 0.5rem;
+    }
+    .button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
-  <p>Redirecting to dashboard...</p>
+  <div class="container">
+    <h1>${route.title}</h1>
+    <p>This is a static version of the Ghibli Vision app. For the full interactive experience, please visit our main website.</p>
+    <a href="/" class="button">Home</a>
+    <a href="/dashboard" class="button">Dashboard</a>
+    <a href="https://github.com/AmirhosseinOlyaei/image-generator-with-upload" class="button" target="_blank">GitHub Repository</a>
+  </div>
 </body>
-</html>
-`
-fs.writeFileSync(`${deployDir}/index.html`, indexHtml)
+</html>`
+
+  fs.writeFileSync(path.join(deployDir, route.path), html)
+})
 
 // Create a _routes.json file for Cloudflare Pages
 const routesJson = {
@@ -76,10 +122,8 @@ const routesJson = {
   include: ['/*'],
   exclude: [],
 }
-fs.writeFileSync(
-  `${deployDir}/_routes.json`,
-  JSON.stringify(routesJson, null, 2),
-)
 
-console.log('✅ Deployment package created successfully!')
+fs.writeFileSync(`${deployDir}/_routes.json`, JSON.stringify(routesJson, null, 2))
+
+console.log('✅ Static site created successfully!')
 console.log(`🌐 Deploy the "${deployDir}" directory to Cloudflare Pages`)
