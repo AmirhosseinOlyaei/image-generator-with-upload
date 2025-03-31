@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { useRef, useState } from 'react'
 
 interface ImageUploadProps {
-  // eslint-disable-next-line no-unused-vars
   onFileSelected: (file: File) => void
   imagePreview: string | null
 }
@@ -30,7 +29,6 @@ export default function ImageUpload({
   const handleUpload = async (file: File) => {
     // Validate file type
     if (!file.type.match('image.*')) {
-      // eslint-disable-next-line no-undef
       window.alert('Please select an image file')
       return
     }

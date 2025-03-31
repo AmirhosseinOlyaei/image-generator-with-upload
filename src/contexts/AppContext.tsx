@@ -1,8 +1,8 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
-import type { User } from '@supabase/auth-helpers-nextjs'
 import type { UserProfile } from '@/lib/supabase'
+import type { User } from '@supabase/auth-helpers-nextjs'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import React, {
   createContext,
@@ -47,31 +47,34 @@ interface UserPreferences {
 }
 
 // Define type for AppAction
-type AppAction = 
-  | { type: 'UPDATE_AUTH_STATE'; isAuthenticated: boolean; isAuthLoading: boolean }
-  | { type: 'UPDATE_STATE'; [key: string]: unknown };
+type AppAction =
+  | {
+      type: 'UPDATE_AUTH_STATE'
+      isAuthenticated: boolean
+      isAuthLoading: boolean
+    }
+  | { type: 'UPDATE_STATE'; [key: string]: unknown }
 
 // Define the shape of our context
 interface AppContextType extends AppState {
   toggleDarkMode: () => void
-  // eslint-disable-next-line no-unused-vars
+
   addNotification: (notification: Omit<Notification, 'id'>) => void
-  // eslint-disable-next-line no-unused-vars
+
   removeNotification: (id: string) => void
-  // eslint-disable-next-line no-unused-vars
+
   setProviderKey: (provider: keyof ProviderKeys, key: string) => void
-  // eslint-disable-next-line no-unused-vars
+
   removeProviderKey: (provider: keyof ProviderKeys) => void
-  // eslint-disable-next-line no-unused-vars
+
   getProviderKey: (provider: keyof ProviderKeys) => string | undefined
-  // eslint-disable-next-line no-unused-vars
+
   setUserPreference: <K extends keyof UserPreferences>(
-    // eslint-disable-next-line no-unused-vars
     key: K,
-    // eslint-disable-next-line no-unused-vars
+
     value: UserPreferences[K],
   ) => void
-  // eslint-disable-next-line no-unused-vars
+
   addRecentPrompt: (prompt: string) => void
   user: User | null
   profile: UserProfile | null
@@ -84,21 +87,21 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
     case 'UPDATE_AUTH_STATE':
-      return { 
-        ...state, 
-        isAuthenticated: action.isAuthenticated, 
-        isAuthLoading: action.isAuthLoading 
-      };
+      return {
+        ...state,
+        isAuthenticated: action.isAuthenticated,
+        isAuthLoading: action.isAuthLoading,
+      }
     case 'UPDATE_STATE': {
       // Destructure and omit 'type' from the updates
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-      const { type, ...updates } = action;
-      return { ...state, ...updates };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { type, ...updates } = action
+      return { ...state, ...updates }
     }
     default:
-      return state;
+      return state
   }
-};
+}
 
 // Provider component that wraps your app and makes the context available
 export const AppProvider: React.FC<{ children: ReactNode }> = ({
@@ -125,8 +128,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
         if (session) {
           dispatch({
             type: 'UPDATE_AUTH_STATE',
@@ -150,7 +155,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         })
       }
     }
-    
+
     checkAuth()
   }, [supabase])
 
@@ -223,16 +228,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     // Initial auth check
     const checkAuth = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession()
         if (error) {
-          throw error;
+          throw error
         }
-        
+
         dispatch({
           type: 'UPDATE_AUTH_STATE',
           isAuthenticated: !!data.session,
           isAuthLoading: false,
-        });
+        })
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('Error checking auth status:', err)
@@ -240,41 +245,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           type: 'UPDATE_AUTH_STATE',
           isAuthenticated: false,
           isAuthLoading: false,
-        });
+        })
       }
-    };
-    
-    checkAuth();
-    
+    }
+
+    checkAuth()
+
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          dispatch({
-            type: 'UPDATE_AUTH_STATE',
-            isAuthenticated: true,
-            isAuthLoading: false,
-          });
-        } else if (event === 'SIGNED_OUT') {
-          dispatch({
-            type: 'UPDATE_AUTH_STATE',
-            isAuthenticated: false,
-            isAuthLoading: false,
-          });
-          
-          // Clear provider keys when signed out
-          dispatch({
-            type: 'UPDATE_STATE',
-            providerKeys: {},
-          });
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(event => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        dispatch({
+          type: 'UPDATE_AUTH_STATE',
+          isAuthenticated: true,
+          isAuthLoading: false,
+        })
+      } else if (event === 'SIGNED_OUT') {
+        dispatch({
+          type: 'UPDATE_AUTH_STATE',
+          isAuthenticated: false,
+          isAuthLoading: false,
+        })
+
+        // Clear provider keys when signed out
+        dispatch({
+          type: 'UPDATE_STATE',
+          providerKeys: {},
+        })
       }
-    );
-    
+    })
+
     return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   // Load provider keys from Supabase
   useEffect(() => {
@@ -287,56 +292,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             const { error: tablesError } = await supabase
               .from('provider_keys')
               .select('count')
-              .limit(1);
-              
+              .limit(1)
+
             // If we get a specific error about the table not existing,
             // we'll just use empty provider keys
-            if (tablesError && 'code' in tablesError && tablesError.code === '42P01') {
+            if (
+              tablesError &&
+              'code' in tablesError &&
+              tablesError.code === '42P01'
+            ) {
               // Table doesn't exist - expected for new setups
               dispatch({
                 type: 'UPDATE_STATE',
                 providerKeys: {},
-              });
-              return;
+              })
+              return
             }
-            
+
             // If we reach here, the table exists, so proceed with the query
             const { data, error } = await supabase
               .from('provider_keys')
               .select('*')
-              .eq('user_id', user.id);
-            
+              .eq('user_id', user.id)
+
             // If there's a data error, handle it but don't throw
             if (error) {
               // Handle error silently
               dispatch({
                 type: 'UPDATE_STATE',
                 providerKeys: {},
-              });
-              return;
+              })
+              return
             }
-            
+
             // If we found provider keys, process them
             if (data && data.length > 0) {
-              const userKeys = data[0]; // Get the first entry
-              const keys: ProviderKeys = {};
-              
-              if (userKeys.openai_key) keys.openai = userKeys.openai_key;
-              if (userKeys.stability_key) keys.stability = userKeys.stability_key;
-              if (userKeys.midjourney_key) keys.midjourney = userKeys.midjourney_key;
-              if (userKeys.leonardo_key) keys.leonardo = userKeys.leonardo_key;
-              
+              const userKeys = data[0] // Get the first entry
+              const keys: ProviderKeys = {}
+
+              if (userKeys.openai_key) keys.openai = userKeys.openai_key
+              if (userKeys.stability_key)
+                keys.stability = userKeys.stability_key
+              if (userKeys.midjourney_key)
+                keys.midjourney = userKeys.midjourney_key
+              if (userKeys.leonardo_key) keys.leonardo = userKeys.leonardo_key
+
               dispatch({
                 type: 'UPDATE_STATE',
                 providerKeys: keys,
-              });
+              })
             } else {
               // No provider keys found for this user, which is fine for new users
               // Initialize with empty object to prevent further fetch attempts
               dispatch({
                 type: 'UPDATE_STATE',
                 providerKeys: {},
-              });
+              })
             }
           } catch (fetchError) {
             // Handle any other errors silently
@@ -344,14 +355,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             dispatch({
               type: 'UPDATE_STATE',
               providerKeys: {},
-            });
+            })
           }
         } else if (user === null && !authLoading) {
           // User is definitely not logged in, clear any existing provider keys
           dispatch({
             type: 'UPDATE_STATE',
             providerKeys: {},
-          });
+          })
         }
         // If user is still loading (authLoading === true), we'll wait for the next cycle
       } catch (err) {
@@ -359,15 +370,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         dispatch({
           type: 'UPDATE_STATE',
           providerKeys: {},
-        });
+        })
       }
-    };
+    }
 
     // Only run the effect if authentication state is stable
     if (!authLoading) {
-      fetchProviderKeys();
+      fetchProviderKeys()
     }
-  }, [user, supabase, authLoading]);
+  }, [user, supabase, authLoading])
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -554,9 +565,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     profile,
   }
 
-  return (
-    <AppContext.Provider value={value}>{children}</AppContext.Provider>
-  )
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
 
 // Custom hook to use the AppContext

@@ -13,11 +13,9 @@ interface AIProviderResponse {
  * Call the OpenAI DALL-E API to generate a Ghibli-style image
  */
 export const generateWithOpenAI = async (
-  /* eslint-disable no-unused-vars */
   _imageFile: File,
   _prompt: string,
   _apiKey?: string,
-  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, we would:
@@ -36,7 +34,10 @@ export const generateWithOpenAI = async (
     return {
       success: false,
       imageUrl: '',
-      error: error instanceof Error ? error.message : 'Failed to generate image with OpenAI',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate image with OpenAI',
     }
   }
 }
@@ -45,11 +46,9 @@ export const generateWithOpenAI = async (
  * Call the Stability AI API to generate a Ghibli-style image
  */
 export const generateWithStabilityAI = async (
-  /* eslint-disable no-unused-vars */
   _imageFile: File,
   _prompt: string,
   _apiKey?: string,
-  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, similar to OpenAI function above
@@ -65,7 +64,10 @@ export const generateWithStabilityAI = async (
     return {
       success: false,
       imageUrl: '',
-      error: error instanceof Error ? error.message : 'Failed to generate image with Stability AI',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate image with Stability AI',
     }
   }
 }
@@ -74,11 +76,9 @@ export const generateWithStabilityAI = async (
  * Call the Midjourney API to generate a Ghibli-style image
  */
 export const generateWithMidjourney = async (
-  /* eslint-disable no-unused-vars */
   _imageFile: File,
   _prompt: string,
   _apiKey?: string,
-  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, would use a third-party API for Midjourney
@@ -94,7 +94,10 @@ export const generateWithMidjourney = async (
     return {
       success: false,
       imageUrl: '',
-      error: error instanceof Error ? error.message : 'Failed to generate image with Midjourney',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate image with Midjourney',
     }
   }
 }
@@ -103,11 +106,9 @@ export const generateWithMidjourney = async (
  * Call the Leonardo AI API to generate a Ghibli-style image
  */
 export const generateWithLeonardoAI = async (
-  /* eslint-disable no-unused-vars */
   _imageFile: File,
   _prompt: string,
   _apiKey?: string,
-  /* eslint-enable no-unused-vars */
 ): Promise<AIProviderResponse> => {
   try {
     // In a real implementation, would call Leonardo AI's API
@@ -123,7 +124,10 @@ export const generateWithLeonardoAI = async (
     return {
       success: false,
       imageUrl: '',
-      error: error instanceof Error ? error.message : 'Failed to generate image with Leonardo AI',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate image with Leonardo AI',
     }
   }
 }

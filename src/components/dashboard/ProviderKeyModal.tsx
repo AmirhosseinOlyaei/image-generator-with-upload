@@ -21,7 +21,7 @@ import { useState } from 'react'
 interface ProviderKeyModalProps {
   open: boolean
   onClose: () => void
-  // eslint-disable-next-line no-unused-vars
+
   onSubmit: (apiKey: string) => void
   onSubscribe: () => void
   aiProvider: {
@@ -38,7 +38,7 @@ export default function ProviderKeyModal({
   onSubscribe,
   aiProvider,
 }: ProviderKeyModalProps) {
-  const { name } = aiProvider;
+  const { name } = aiProvider
   const [key, setKey] = useState('')
   const [error, setError] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)

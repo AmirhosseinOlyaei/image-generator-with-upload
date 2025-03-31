@@ -38,13 +38,12 @@ type Provider = 'openai' | 'stability' | 'midjourney' | 'leonardo'
 
 interface ImageGeneratorProps {
   onGenerateSuccess: (
-    // eslint-disable-next-line no-unused-vars
     originalImage: string,
-    // eslint-disable-next-line no-unused-vars
+
     generatedImage: string,
-    // eslint-disable-next-line no-unused-vars
+
     prompt: string,
-    // eslint-disable-next-line no-unused-vars
+
     provider: string,
   ) => void
   freeGenerationsLeft?: number

@@ -85,7 +85,8 @@ export const useImageUpload = (options: UseImageUploadOptions = {}) => {
 
         return true
       } catch (error: Error | unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to process image'
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to process image'
         setState({
           ...state,
           uploading: false,

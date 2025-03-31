@@ -5,8 +5,8 @@ import ProviderKeyModal from '@/components/dashboard/ProviderKeyModal'
 import SubscriptionModal from '@/components/dashboard/SubscriptionModal'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
+import { useApp } from '@/contexts/AppContext'
 import { UserProfile } from '@/lib/supabase'
-import { User } from '@supabase/supabase-js'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import {
@@ -28,11 +28,11 @@ import {
   SelectChangeEvent,
   Typography,
 } from '@mui/material'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { User } from '@supabase/supabase-js'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useApp } from '@/contexts/AppContext'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 // AI providers
 const aiProviders = [
@@ -87,12 +87,12 @@ export default function Dashboard() {
         const {
           data: { session },
         } = await supabase.auth.getSession()
-        
+
         if (!session) {
           router.push('/auth/signin')
           return
         }
-        
+
         setUser(session.user)
 
         if (session.user) {
@@ -113,29 +113,29 @@ export default function Dashboard() {
                   headers: {
                     'Content-Type': 'application/json',
                   },
-                });
+                })
 
-                const result = await response.json();
+                const result = await response.json()
 
                 if (response.ok && result.success && result.profile) {
-                  setProfile(result.profile as UserProfile);
+                  setProfile(result.profile as UserProfile)
                 } else {
                   setError(
-                    'Error creating profile. Please try refreshing the page or contact support.'
-                  );
+                    'Error creating profile. Please try refreshing the page or contact support.',
+                  )
                 }
               } catch (err) {
                 setError(
-                  'Error creating profile. Please try refreshing the page or contact support.'
-                );
+                  'Error creating profile. Please try refreshing the page or contact support.',
+                )
               }
             } else {
               setError(
-                'Error fetching profile. Please try refreshing the page or contact support.'
-              );
+                'Error fetching profile. Please try refreshing the page or contact support.',
+              )
             }
           } else {
-            setProfile(profileData as UserProfile);
+            setProfile(profileData as UserProfile)
           }
         }
       } catch (error) {
@@ -249,7 +249,11 @@ export default function Dashboard() {
         }
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to generate image. Please try again.')
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate image. Please try again.',
+      )
     } finally {
       setGenerating(false)
     }
@@ -314,7 +318,7 @@ export default function Dashboard() {
             severity='error'
             sx={{ mb: 3 }}
             action={
-              profile && 
+              profile &&
               (profile.credits ?? 0) > 0 &&
               profile.plan === 'free' ? (
                 <Button
@@ -331,14 +335,12 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {profile && 
-          (profile.credits ?? 0) === 0 &&
-          profile.plan === 'free' && (
-            <Alert severity='info' sx={{ mb: 3 }}>
-              You have 1 free image transformation available! Enjoy your Ghibli
-              style image.
-            </Alert>
-          )}
+        {profile && (profile.credits ?? 0) === 0 && profile.plan === 'free' && (
+          <Alert severity='info' sx={{ mb: 3 }}>
+            You have 1 free image transformation available! Enjoy your Ghibli
+            style image.
+          </Alert>
+        )}
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={7}>
