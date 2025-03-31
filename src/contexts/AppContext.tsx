@@ -11,6 +11,7 @@ import React, {
   useEffect,
   useReducer,
   useRef,
+  useCallback,
 } from 'react'
 
 // Define the shape of our app state
@@ -146,8 +147,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           })
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error checking auth status:', error)
         dispatch({
           type: 'UPDATE_AUTH_STATE',
           isAuthenticated: false,
@@ -210,7 +209,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             },
           })
         } catch (error) {
-          // Silent error handling for preferences parsing
           dispatch({
             type: 'UPDATE_STATE',
             userPreferences: {
@@ -221,7 +219,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         }
       }
     }
-  }, [])
+  }, [dispatch, supabase, state.userPreferences])
 
   // Set up auth state listener
   useEffect(() => {
@@ -239,8 +237,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           isAuthLoading: false,
         })
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Error checking auth status:', err)
         dispatch({
           type: 'UPDATE_AUTH_STATE',
           isAuthenticated: false,
@@ -279,106 +275,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [supabase, dispatch])
 
-  // Load provider keys from Supabase
-  useEffect(() => {
-    const fetchProviderKeys = async () => {
-      try {
-        // Only try to fetch if user exists and is fully loaded
-        if (user && user.id) {
-          try {
-            // First check if the provider_keys table exists by getting tables list
-            const { error: tablesError } = await supabase
-              .from('provider_keys')
-              .select('count')
-              .limit(1)
+  const fetchProviderKeys = useCallback(async () => {
+    try {
+      if (user && profile) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('provider_keys')
+          .eq('id', user.id)
+          .single()
 
-            // If we get a specific error about the table not existing,
-            // we'll just use empty provider keys
-            if (
-              tablesError &&
-              'code' in tablesError &&
-              tablesError.code === '42P01'
-            ) {
-              // Table doesn't exist - expected for new setups
-              dispatch({
-                type: 'UPDATE_STATE',
-                providerKeys: {},
-              })
-              return
-            }
+        if (error) {
+          throw error
+        }
 
-            // If we reach here, the table exists, so proceed with the query
-            const { data, error } = await supabase
-              .from('provider_keys')
-              .select('*')
-              .eq('user_id', user.id)
-
-            // If there's a data error, handle it but don't throw
-            if (error) {
-              // Handle error silently
-              dispatch({
-                type: 'UPDATE_STATE',
-                providerKeys: {},
-              })
-              return
-            }
-
-            // If we found provider keys, process them
-            if (data && data.length > 0) {
-              const userKeys = data[0] // Get the first entry
-              const keys: ProviderKeys = {}
-
-              if (userKeys.openai_key) keys.openai = userKeys.openai_key
-              if (userKeys.stability_key)
-                keys.stability = userKeys.stability_key
-              if (userKeys.midjourney_key)
-                keys.midjourney = userKeys.midjourney_key
-              if (userKeys.leonardo_key) keys.leonardo = userKeys.leonardo_key
-
-              dispatch({
-                type: 'UPDATE_STATE',
-                providerKeys: keys,
-              })
-            } else {
-              // No provider keys found for this user, which is fine for new users
-              // Initialize with empty object to prevent further fetch attempts
-              dispatch({
-                type: 'UPDATE_STATE',
-                providerKeys: {},
-              })
-            }
-          } catch (fetchError) {
-            // Handle any other errors silently
-            // Set empty provider keys to avoid further errors
-            dispatch({
-              type: 'UPDATE_STATE',
-              providerKeys: {},
-            })
-          }
-        } else if (user === null && !authLoading) {
-          // User is definitely not logged in, clear any existing provider keys
+        if (data?.provider_keys) {
           dispatch({
             type: 'UPDATE_STATE',
-            providerKeys: {},
+            providerKeys: data.provider_keys,
           })
         }
-        // If user is still loading (authLoading === true), we'll wait for the next cycle
-      } catch (err) {
-        // Set empty provider keys to avoid further errors
-        dispatch({
-          type: 'UPDATE_STATE',
-          providerKeys: {},
-        })
       }
+    } catch (error) {
+      dispatch({
+        type: 'UPDATE_STATE',
+        providerKeys: {},
+      })
     }
+  }, [user, profile, supabase])
 
+  useEffect(() => {
     // Only run the effect if authentication state is stable
     if (!authLoading) {
       fetchProviderKeys()
     }
-  }, [user, supabase, authLoading])
+  }, [user, supabase, authLoading, fetchProviderKeys, dispatch])
 
   // Toggle dark mode
   const toggleDarkMode = () => {

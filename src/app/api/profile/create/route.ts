@@ -1,11 +1,15 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { Database } from '@/types/supabase'
 
+// Reference: https://github.com/vercel/next.js/discussions/46498#discussioncomment-5077080
 export async function POST() {
   try {
-    // Initialize Supabase client with cookies for the user's session
-    const supabase = createRouteHandlerClient({ cookies })
+    // Initialize Supabase client with direct API access
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
 
     // Get the current user session
     const {
@@ -28,35 +32,44 @@ export async function POST() {
       return NextResponse.json({
         success: true,
         profile: existingProfile,
+        message: 'Profile already exists',
       })
     }
 
-    // Create a profile for the user
-    const { data: newProfile, error: createError } = await supabase
+    // Create a new profile for the user
+    const { data: profile, error } = await supabase
       .from('profiles')
       .insert([
         {
           id: session.user.id,
           email: session.user.email,
-          full_name: session.user.user_metadata?.full_name || '',
-          plan: 'free',
-          credits: 1, // Start with 1 free credit
+          credits: 10, // Default credits for new users
+          plan: 'free', // Default plan
         },
       ])
-      .select('*')
+      .select()
       .single()
 
-    if (createError) {
-      return NextResponse.json({ error: createError.message }, { status: 500 })
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error creating profile:', error)
+      return NextResponse.json(
+        { error: 'Failed to create profile' },
+        { status: 500 },
+      )
     }
 
     return NextResponse.json({
       success: true,
-      profile: newProfile,
+      profile,
+      message: 'Profile created successfully',
     })
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unexpected error occurred'
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    // eslint-disable-next-line no-console
+    console.error('Profile creation error:', error)
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
+      { status: 500 },
+    )
   }
 }

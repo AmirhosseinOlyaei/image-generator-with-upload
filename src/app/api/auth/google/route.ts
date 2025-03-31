@@ -1,12 +1,14 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { Database } from '@/types/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Supabase client with cookies for the user's session
-    // Fix for Next.js cookies() warning
-    const supabase = createRouteHandlerClient({ cookies })
+    // Initialize Supabase client with direct API access
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
 
     // Get the URL for Google OAuth sign-in
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -23,9 +25,11 @@ export async function POST(request: NextRequest) {
     // Return the URL to redirect to
     return NextResponse.json({ url: data.url })
   } catch (error) {
-    // Use a type guard to check if error is an Error object
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unexpected error occurred'
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    // eslint-disable-next-line no-console
+    console.error('Google auth error:', error)
+    return NextResponse.json(
+      { error: 'An error occurred during Google authentication' },
+      { status: 500 },
+    )
   }
 }

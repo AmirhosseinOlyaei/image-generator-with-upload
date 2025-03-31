@@ -2,7 +2,7 @@ import type { UserProfile } from '@/lib/supabase'
 import type { User } from '@supabase/auth-helpers-nextjs'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export interface AuthState {
   user: User | null
@@ -22,25 +22,26 @@ export const useAuth = () => {
   const supabase = createClientComponentClient()
 
   // Helper function to just fetch profile without creation
-  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+  const fetchProfile = useCallback(
+    async (userId: string): Promise<UserProfile | null> => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
 
-      if (error) {
-        // Just return null for any error - don't throw or log
+        if (error) {
+          throw error
+        }
+
+        return data
+      } catch (error) {
         return null
       }
-
-      return data
-    } catch (err) {
-      // Just return null for any error - don't throw or log
-      return null
-    }
-  }
+    },
+    [supabase],
+  )
 
   // Check if the user is authenticated and load profile data
   useEffect(() => {
@@ -145,7 +146,7 @@ export const useAuth = () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [supabase, router])
+  }, [supabase, router, fetchProfile])
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
