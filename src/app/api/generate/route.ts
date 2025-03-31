@@ -312,8 +312,8 @@ async function callLeonardoAI(
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Supabase client with direct API access
-    const supabase = createClient<Database>(
+    // Initialize Supabase client
+    const _supabase = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
     // Get session to verify user is authenticated
     // const {
     //   data: { session },
-    // } = await supabase.auth.getSession()
+    // } = await _supabase.auth.getSession()
 
     // if (!session) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
 
     // TEMPORARILY DISABLED AUTH: Skip profile check
     // Get user profile to check free image usage
-    // const { data: profile, error: profileError } = await supabase
+    // const { data: profile, error: profileError } = await _supabase
     //   .from('profiles')
     //   .select('*')
     //   .eq('id', session.user.id)
@@ -385,7 +385,7 @@ export async function POST(request: NextRequest) {
     // TEMPORARILY DISABLED AUTH: Skip updating profile
     // If this was their free image, decrement the counter
     // if (hasRemainingFreeGenerations) {
-    //   await supabase
+    //   await _supabase
     //     .from('profiles')
     //     .update({ credits: profile.credits - 1 })
     //     .eq('id', session.user.id)
