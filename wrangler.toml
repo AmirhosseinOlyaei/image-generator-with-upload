@@ -1,9 +1,18 @@
-name = "ghibli-vision-worker"
+name = "ghibli-vision"
 main = "workers-src/index.ts"
 compatibility_date = "2024-03-31"
 
 # Enable Node.js compatibility
 compatibility_flags = ["nodejs_compat"]
+
+# Specify Node.js version
+[build.environment]
+NODE_VERSION = "20"
+
+# Configure build settings
+[build]
+command = "pnpm build"
+output_directory = ".vercel/output/static"
 
 # For local development
 [dev]
@@ -19,6 +28,3 @@ port = 8787
 # LEONARDO_API_KEY = ""
 # NEXT_PUBLIC_SUPABASE_URL = ""
 # NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
-
-# Configuration for Cloudflare Pages
-pages_build_output_dir = ".vercel/output/static"
