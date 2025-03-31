@@ -8,13 +8,12 @@ export async function POST() {
     const supabase = createRouteHandlerClient({ cookies })
 
     // Get the current user session
-    const { data: { session } } = await supabase.auth.getSession()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
     // Check if profile already exists
@@ -26,9 +25,9 @@ export async function POST() {
 
     if (!checkError && existingProfile) {
       // Profile already exists, return it
-      return NextResponse.json({ 
-        success: true, 
-        profile: existingProfile 
+      return NextResponse.json({
+        success: true,
+        profile: existingProfile,
       })
     }
 
@@ -48,21 +47,16 @@ export async function POST() {
       .single()
 
     if (createError) {
-      return NextResponse.json(
-        { error: createError.message },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: createError.message }, { status: 500 })
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      profile: newProfile
+    return NextResponse.json({
+      success: true,
+      profile: newProfile,
     })
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred'
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

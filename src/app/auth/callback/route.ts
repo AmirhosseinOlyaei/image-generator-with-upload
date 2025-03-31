@@ -5,7 +5,8 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const redirectedFrom = requestUrl.searchParams.get('redirectedFrom') || '/dashboard'
+  const redirectedFrom =
+    requestUrl.searchParams.get('redirectedFrom') || '/dashboard'
 
   if (code) {
     // Create a Supabase client using the route handler
@@ -15,8 +16,10 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
 
     // Get the redirected from path or default to dashboard
-    const redirectPath = redirectedFrom.startsWith('/') ? redirectedFrom : '/dashboard'
-    
+    const redirectPath = redirectedFrom.startsWith('/')
+      ? redirectedFrom
+      : '/dashboard'
+
     // URL to redirect to after sign in process completes
     return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
   }
