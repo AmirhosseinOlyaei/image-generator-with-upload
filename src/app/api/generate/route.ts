@@ -1,9 +1,10 @@
+import { Database } from '@/types/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import axios from 'axios'
+import { Buffer } from 'buffer'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import axios from 'axios'
-import { Buffer } from 'buffer'
 
 // Function for calling different provider APIs
 async function callProviderApi(
@@ -16,10 +17,11 @@ async function callProviderApi(
   const arrayBuffer = await imageFile.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const base64Image = buffer.toString('base64')
-  
+
   // Prepare the prompt for image generation
-  const fullPrompt = `Transform this image into Studio Ghibli style. ${prompt}`.trim()
-  
+  const fullPrompt =
+    `Transform this image into Studio Ghibli style. ${prompt}`.trim()
+
   try {
     switch (provider) {
       case 'openai':
@@ -27,25 +29,31 @@ async function callProviderApi(
       case 'stability':
         // Check if API key is available
         if (!apiKey && !process.env.STABILITY_API_KEY) {
-          throw new Error('Stability AI API key not found. Please provide your own API key.')
+          throw new Error(
+            'Stability AI API key not found. Please provide your own API key.',
+          )
         }
         return await callStabilityAI(base64Image, fullPrompt, apiKey)
       case 'midjourney':
         // Check if API key is available
         if (!apiKey && !process.env.MIDJOURNEY_API_KEY) {
-          throw new Error('Midjourney API key not found. Please provide your own API key.')
+          throw new Error(
+            'Midjourney API key not found. Please provide your own API key.',
+          )
         }
         return await callMidjourney(base64Image, fullPrompt, apiKey)
       case 'leonardo':
         // Check if API key is available
         if (!apiKey && !process.env.LEONARDO_API_KEY) {
-          throw new Error('Leonardo AI API key not found. Please provide your own API key.')
+          throw new Error(
+            'Leonardo AI API key not found. Please provide your own API key.',
+          )
         }
         return await callLeonardoAI(base64Image, fullPrompt, apiKey)
       default:
         throw new Error('Invalid AI provider')
     }
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error(`Error calling ${provider} API:`, error)
     throw error
@@ -53,13 +61,19 @@ async function callProviderApi(
 }
 
 // OpenAI DALL-E 3 API implementation
-async function callOpenAI(base64Image: string, prompt: string, apiKey?: string) {
+async function callOpenAI(
+  base64Image: string,
+  prompt: string,
+  apiKey?: string,
+) {
   const key = apiKey || process.env.OPENAI_API_KEY
-  
+
   if (!key) {
-    throw new Error('OpenAI API key not found. Please provide your own API key.')
+    throw new Error(
+      'OpenAI API key not found. Please provide your own API key.',
+    )
   }
-  
+
   const openai = new OpenAI({
     apiKey: key,
   })
@@ -67,12 +81,16 @@ async function callOpenAI(base64Image: string, prompt: string, apiKey?: string) 
   try {
     // Convert base64 to Buffer for OpenAI SDK
     const imageBuffer = Buffer.from(base64Image, 'base64')
-    
+
     // eslint-disable-next-line no-console
     console.log('Calling OpenAI API with prompt:', prompt)
-    
+
+    // Create a Blob from the buffer and convert it to a File object
+    const blob = new Blob([imageBuffer], { type: 'image/png' })
+    const file = new File([blob], 'image.png', { type: 'image/png' })
+
     const response = await openai.images.edit({
-      image: imageBuffer,
+      image: file,
       prompt: prompt,
       n: 1,
       size: '1024x1024',
@@ -84,19 +102,25 @@ async function callOpenAI(base64Image: string, prompt: string, apiKey?: string) 
 
     // eslint-disable-next-line no-console
     console.log('OpenAI response received:', response.data[0].url)
-    
+
     return response.data[0].url
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error('OpenAI API error:', error)
-    throw new Error(`Failed to generate image with OpenAI: ${error.message || 'Unknown error'}`)
+    throw new Error(
+      `Failed to generate image with OpenAI: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
   }
 }
 
 // Stability AI API implementation
-async function callStabilityAI(base64Image: string, prompt: string, apiKey?: string) {
+async function callStabilityAI(
+  base64Image: string,
+  prompt: string,
+  apiKey?: string,
+) {
   const key = apiKey || process.env.STABILITY_API_KEY
-  
+
   try {
     const response = await axios.post(
       'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/image-to-image',
@@ -114,12 +138,12 @@ async function callStabilityAI(base64Image: string, prompt: string, apiKey?: str
           Accept: 'application/json',
           Authorization: `Bearer ${key}`,
         },
-      }
+      },
     )
 
     // Extract image URL from response
     return response.data.artifacts[0].base64
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error('Stability AI API error:', error)
     throw new Error('Failed to generate image with Stability AI')
@@ -127,9 +151,13 @@ async function callStabilityAI(base64Image: string, prompt: string, apiKey?: str
 }
 
 // Midjourney API implementation (via third-party API)
-async function callMidjourney(base64Image: string, prompt: string, apiKey?: string) {
+async function callMidjourney(
+  base64Image: string,
+  prompt: string,
+  apiKey?: string,
+) {
   const key = apiKey || process.env.MIDJOURNEY_API_KEY
-  
+
   try {
     // Using a third-party API for Midjourney access
     const response = await axios.post(
@@ -144,11 +172,11 @@ async function callMidjourney(base64Image: string, prompt: string, apiKey?: stri
           'Content-Type': 'application/json',
           Authorization: `Bearer ${key}`,
         },
-      }
+      },
     )
 
     return response.data.imageUrl
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error('Midjourney API error:', error)
     throw new Error('Failed to generate image with Midjourney')
@@ -156,9 +184,13 @@ async function callMidjourney(base64Image: string, prompt: string, apiKey?: stri
 }
 
 // Leonardo AI API implementation
-async function callLeonardoAI(base64Image: string, prompt: string, apiKey?: string) {
+async function callLeonardoAI(
+  base64Image: string,
+  prompt: string,
+  apiKey?: string,
+) {
   const key = apiKey || process.env.LEONARDO_API_KEY
-  
+
   try {
     // First, upload the image
     const uploadResponse = await axios.post(
@@ -171,7 +203,7 @@ async function callLeonardoAI(base64Image: string, prompt: string, apiKey?: stri
           'Content-Type': 'application/json',
           Authorization: `Bearer ${key}`,
         },
-      }
+      },
     )
 
     const imageId = uploadResponse.data.id
@@ -192,7 +224,7 @@ async function callLeonardoAI(base64Image: string, prompt: string, apiKey?: stri
           'Content-Type': 'application/json',
           Authorization: `Bearer ${key}`,
         },
-      }
+      },
     )
 
     // Get generation ID
@@ -207,7 +239,7 @@ async function callLeonardoAI(base64Image: string, prompt: string, apiKey?: stri
           headers: {
             Authorization: `Bearer ${key}`,
           },
-        }
+        },
       )
 
       if (resultResponse.data.generations_by_pk.status === 'COMPLETE') {
@@ -220,7 +252,7 @@ async function callLeonardoAI(base64Image: string, prompt: string, apiKey?: stri
     }
 
     throw new Error('Leonardo AI generation timed out')
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error('Leonardo AI API error:', error)
     throw new Error('Failed to generate image with Leonardo AI')
@@ -230,8 +262,7 @@ async function callLeonardoAI(base64Image: string, prompt: string, apiKey?: stri
 export async function POST(request: NextRequest) {
   try {
     // Create a Supabase client using the route handler
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = createRouteHandlerClient<Database>({ cookies })
 
     // Get session to verify user is authenticated
     const {
@@ -258,7 +289,9 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const imageFile = formData.get('image') as File
-    const prompt = formData.get('prompt') as string || 'Transform this image into Studio Ghibli style'
+    const prompt =
+      (formData.get('prompt') as string) ||
+      'Transform this image into Studio Ghibli style'
     const provider = formData.get('provider') as string
     const customApiKey = formData.get('apiKey') as string | null
 
@@ -286,10 +319,10 @@ export async function POST(request: NextRequest) {
 
     // Call the selected provider's API
     const generatedImageUrl = await callProviderApi(
-      provider, 
-      imageFile, 
-      prompt, 
-      customApiKey || undefined
+      provider,
+      imageFile,
+      prompt,
+      customApiKey || undefined,
     )
 
     // If this was their free image, increment the counter
@@ -305,11 +338,14 @@ export async function POST(request: NextRequest) {
       imageUrl: generatedImageUrl,
       provider: provider,
     })
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error('Error generating image:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate image' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to generate image',
+      },
       { status: 500 },
     )
   }
