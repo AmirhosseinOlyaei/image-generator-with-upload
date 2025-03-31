@@ -40,22 +40,26 @@ const aiProviders = [
     name: 'OpenAI DALL-E 3',
     description:
       'Advanced AI model by OpenAI with excellent Ghibli transformations',
+    disabled: false,
   },
   {
     id: 'stability',
     name: 'Stability AI',
     description:
       'Specialized in artistic transformations with great Ghibli styles',
+    disabled: true,
   },
   {
     id: 'midjourney',
     name: 'Midjourney (via API)',
     description: 'Known for highest quality anime-style transformations',
+    disabled: true,
   },
   {
     id: 'leonardo',
     name: 'Leonardo AI',
     description: 'AI platform with fine-tuned Ghibli aesthetic capabilities',
+    disabled: true,
   },
 ]
 
@@ -172,7 +176,12 @@ export default function Dashboard() {
   }
 
   const handleProviderChange = (event: SelectChangeEvent<string>) => {
-    setSelectedProvider(event.target.value)
+    const newProvider = event.target.value
+    // Only allow changing to enabled providers
+    const provider = aiProviders.find(p => p.id === newProvider)
+    if (provider && !provider.disabled) {
+      setSelectedProvider(newProvider)
+    }
   }
 
   const handleCustomApiKeySubmit = async (providerKey: string) => {
@@ -384,10 +393,16 @@ export default function Dashboard() {
                     onChange={handleProviderChange}
                   >
                     {aiProviders.map(provider => (
-                      <MenuItem key={provider.id} value={provider.id}>
+                      <MenuItem
+                        key={provider.id}
+                        value={provider.id}
+                        disabled={provider.disabled}
+                        sx={provider.disabled ? { opacity: 0.6 } : {}}
+                      >
                         <Box>
                           <Typography variant='body1'>
                             {provider.name}
+                            {provider.disabled && ' (Coming Soon)'}
                           </Typography>
                           <Typography variant='caption' color='text.secondary'>
                             {provider.description}
