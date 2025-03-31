@@ -26,8 +26,7 @@ const nextConfig = {
     SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  // Configure for Cloudflare Pages
-  output: 'export', // Static site generation for Cloudflare Pages
+  // Configure for Cloudflare Pages with server-side rendering
 }
 
 export default nextConfig
