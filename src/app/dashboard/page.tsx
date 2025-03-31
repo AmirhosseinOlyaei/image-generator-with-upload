@@ -239,8 +239,29 @@ export default function Dashboard() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate image')
+        try {
+          // Try to parse as JSON first
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to generate image')
+        } catch (jsonError) {
+          // If JSON parsing fails, it's likely an HTML response (like "Request Entity Too Large")
+          // Get the response again since we already consumed it
+          const textResponse = await fetch('/api/generate', {
+            method: 'POST',
+            body: formData,
+          })
+          const errorText = await textResponse.text()
+
+          if (errorText.includes('Request Entity Too Large')) {
+            throw new Error(
+              'Image file is too large. Please use a smaller image (under 4MB).',
+            )
+          } else {
+            throw new Error(
+              `Server error: ${response.status}. Please try a smaller image or a different format.`,
+            )
+          }
+        }
       }
 
       const data = await response.json()
