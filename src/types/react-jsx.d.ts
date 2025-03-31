@@ -1,9 +1,12 @@
-import React from 'react'
+// This file provides JSX type definitions for React 19 compatibility
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      [elemName: string]: any
+      [elemName: string]: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >
     }
   }
 }
