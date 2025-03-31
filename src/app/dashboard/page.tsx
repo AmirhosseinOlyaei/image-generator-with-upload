@@ -30,7 +30,6 @@ import {
 } from '@mui/material'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -65,9 +64,10 @@ export default function Dashboard() {
   const { user: contextUser, isAuthLoading } = useApp()
   const supabase = createClientComponentClient()
 
+  // TEMPORARILY DISABLED AUTH: Set defaults without requiring authentication
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Changed to false to skip loading state
   const [generating, setGenerating] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
@@ -80,86 +80,95 @@ export default function Dashboard() {
   const [showProviderKeyModal, setShowProviderKeyModal] = useState(false)
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
 
-  useEffect(() => {
-    async function getUser() {
-      try {
-        // Get user
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+  // TEMPORARILY DISABLED AUTH: Comment out authentication check
+  // useEffect(() => {
+  //   async function getUser() {
+  //     try {
+  //       // Get user
+  //       const {
+  //         data: { session },
+  //       } = await supabase.auth.getSession()
 
-        if (!session) {
-          router.push('/auth/signin')
-          return
-        }
+  //       if (!session) {
+  //         router.push('/auth/signin')
+  //         return
+  //       }
 
-        setUser(session.user)
+  //       setUser(session.user)
 
-        if (session.user) {
-          // Get user profile
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
+  //       if (session.user) {
+  //         // Get user profile
+  //         const { data: profileData, error: profileError } = await supabase
+  //           .from('profiles')
+  //           .select('*')
+  //           .eq('id', session.user.id)
+  //           .single()
 
-          if (profileError) {
-            if (profileError.code === 'PGRST116') {
-              // Profile doesn't exist yet, create it using the server API
-              try {
-                // Call our server-side API to create the profile
-                const response = await fetch('/api/profile/create', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                })
+  //         if (profileError) {
+  //           if (profileError.code === 'PGRST116') {
+  //             // Profile doesn't exist yet, create it using the server API
+  //             try {
+  //               // Call our server-side API to create the profile
+  //               const response = await fetch('/api/profile/create', {
+  //                 method: 'POST',
+  //                 headers: {
+  //                   'Content-Type': 'application/json',
+  //                 },
+  //               })
 
-                const result = await response.json()
+  //               const result = await response.json()
 
-                if (response.ok && result.success && result.profile) {
-                  setProfile(result.profile as UserProfile)
-                } else {
-                  setError(
-                    'Error creating profile. Please try refreshing the page or contact support.',
-                  )
-                }
-              } catch (err) {
-                setError(
-                  'Error creating profile. Please try refreshing the page or contact support.',
-                )
-              }
-            } else {
-              setError(
-                'Error fetching profile. Please try refreshing the page or contact support.',
-              )
-            }
-          } else {
-            setProfile(profileData as UserProfile)
-          }
-        }
-      } catch (error) {
-        setError('Authentication error. Please try signing in again.')
-      } finally {
-        setLoading(false)
-      }
+  //               if (response.ok && result.success && result.profile) {
+  //                 setProfile(result.profile as UserProfile)
+  //               } else {
+  //                 setError(
+  //                   'Error creating profile. Please try refreshing the page or contact support.',
+  //                 )
+  //               }
+  //             } catch (err) {
+  //               setError(
+  //                 'Error creating profile. Please try refreshing the page or contact support.',
+  //               )
+  //             }
+  //           } else {
+  //             setError(
+  //               'Error fetching profile. Please try refreshing the page or contact support.',
+  //             )
+  //           }
+  //         } else {
+  //           setProfile(profileData as UserProfile)
+  //         }
+  //       }
+  //     } catch (error) {
+  //       setError('Authentication error. Please try signing in again.')
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+
+  //   getUser()
+  // }, [router, supabase])
+
+  // TEMPORARILY DISABLED AUTH: Comment out redirect
+  // useEffect(() => {
+  //   // Redirect if not authenticated and not loading
+  //   if (!loading && !user && !isAuthLoading && !contextUser) {
+  //     router.push('/auth/signin')
+  //   }
+  // }, [loading, user, isAuthLoading, contextUser, router])
+
+  const handleFileUpload = (file: File | null) => {
+    if (file) {
+      setUploadedImage(file)
+      setUploadedImageUrl(URL.createObjectURL(file))
+      setGeneratedImageUrl(null)
+      setError(null)
+    } else {
+      setUploadedImage(null)
+      setUploadedImageUrl(null)
+      setGeneratedImageUrl(null)
+      setError(null)
     }
-
-    getUser()
-  }, [router, supabase])
-
-  useEffect(() => {
-    // Redirect if not authenticated and not loading
-    if (!loading && !user && !isAuthLoading && !contextUser) {
-      router.push('/auth/signin')
-    }
-  }, [loading, user, isAuthLoading, contextUser, router])
-
-  const handleFileUpload = (file: File) => {
-    setUploadedImage(file)
-    setUploadedImageUrl(URL.createObjectURL(file))
-    setGeneratedImageUrl(null)
-    setError(null)
   }
 
   const handleProviderChange = (event: SelectChangeEvent<string>) => {
@@ -170,17 +179,18 @@ export default function Dashboard() {
     setProviderKeys({ ...providerKeys, [selectedProvider]: providerKey })
     setShowProviderKeyModal(false)
 
-    // Update the user's custom API key in the database
-    if (user) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ custom_api_key: providerKey })
-        .eq('id', user.id)
+    // TEMPORARILY DISABLED AUTH: Comment out profile update
+    // // Update the user's custom API key in the database
+    // if (user) {
+    //   const { error } = await supabase
+    //     .from('profiles')
+    //     .update({ custom_api_key: providerKey })
+    //     .eq('id', user.id)
 
-      if (error) {
-        setError('Failed to save your API key. Please try again.')
-      }
-    }
+    //   if (error) {
+    //     setError('Failed to save your API key. Please try again.')
+    //   }
+    // }
   }
 
   const handleGenerateImage = async () => {
@@ -196,17 +206,18 @@ export default function Dashboard() {
     formData.append('provider', selectedProvider)
 
     try {
-      // Check if user is on free tier and has already used their free generation
-      if (
-        profile &&
-        profile.plan === 'free' &&
-        (profile.credits ?? 0) > 0 &&
-        !providerKeys[selectedProvider]
-      ) {
-        setShowProviderKeyModal(true)
-        setGenerating(false)
-        return
-      }
+      // TEMPORARILY DISABLED AUTH: Comment out profile checks
+      // // Check if user is on free tier and has already used their free generation
+      // if (
+      //   profile &&
+      //   profile.plan === 'free' &&
+      //   (profile.credits ?? 0) > 0 &&
+      //   !providerKeys[selectedProvider]
+      // ) {
+      //   setShowProviderKeyModal(true)
+      //   setGenerating(false)
+      //   return
+      // }
 
       // Add API key if available
       if (providerKeys && providerKeys[selectedProvider]) {
@@ -220,34 +231,35 @@ export default function Dashboard() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to generate image')
+        throw new Error(errorData.error || 'Failed to generate image')
       }
 
       const data = await response.json()
       setGeneratedImageUrl(data.imageUrl)
 
-      // If this was a free tier user's first generation, update their usage in the database
-      if (
-        user &&
-        profile &&
-        profile.plan === 'free' &&
-        (profile.credits ?? 0) === 0 &&
-        !providerKeys[selectedProvider]
-      ) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ credits: 1 })
-          .eq('id', user.id)
+      // TEMPORARILY DISABLED AUTH: Comment out profile update
+      // // If this was a free tier user's first generation, update their usage in the database
+      // if (
+      //   user &&
+      //   profile &&
+      //   profile.plan === 'free' &&
+      //   (profile.credits ?? 0) === 0 &&
+      //   !providerKeys[selectedProvider]
+      // ) {
+      //   const { error } = await supabase
+      //     .from('profiles')
+      //     .update({ credits: 1 })
+      //     .eq('id', user.id)
 
-        if (error) {
-          setError(
-            'Failed to update your usage. Your transformation was successful, but you may see this free option again.',
-          )
-        } else {
-          // Update local state
-          setProfile({ ...profile, credits: 1 })
-        }
-      }
+      //   if (error) {
+      //     setError(
+      //       'Failed to update your usage. Your transformation was successful, but you may see this free option again.',
+      //     )
+      //   } else {
+      //     // Update local state
+      //     setProfile({ ...profile, credits: 1 })
+      //   }
+      // }
     } catch (error: unknown) {
       setError(
         error instanceof Error
@@ -288,16 +300,17 @@ export default function Dashboard() {
     }
   }
 
-  if (loading) {
-    return (
-      <Backdrop
-        sx={{ color: '#fff', zIndex: theme => theme.zIndex.drawer + 1 }}
-        open={true}
-      >
-        <CircularProgress color='inherit' />
-      </Backdrop>
-    )
-  }
+  // TEMPORARILY DISABLED AUTH: Remove loading check
+  // if (loading) {
+  //   return (
+  //     <Backdrop
+  //       sx={{ color: '#fff', zIndex: theme => theme.zIndex.drawer + 1 }}
+  //       open={true}
+  //     >
+  //       <CircularProgress color='inherit' />
+  //     </Backdrop>
+  //   )
+  // }
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -335,12 +348,10 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {profile && (profile.credits ?? 0) === 0 && profile.plan === 'free' && (
-          <Alert severity='info' sx={{ mb: 3 }}>
-            You have 1 free image transformation available! Enjoy your Ghibli
-            style image.
-          </Alert>
-        )}
+        {/* TEMPORARILY DISABLED AUTH: Add info alert about disabled auth */}
+        <Alert severity='info' sx={{ mb: 3 }}>
+          Authentication is temporarily disabled. You can generate images without logging in.
+        </Alert>
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={7}>
@@ -439,11 +450,10 @@ export default function Dashboard() {
                       mb: 2,
                     }}
                   >
-                    <Image
+                    <img
                       src={generatedImageUrl}
                       alt='Generated Ghibli-style image'
-                      fill
-                      style={{ objectFit: 'contain' }}
+                      style={{ objectFit: 'contain', width: '100%', height: '100%' }}
                     />
                   </Box>
 
