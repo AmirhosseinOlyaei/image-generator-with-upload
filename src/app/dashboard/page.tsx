@@ -22,6 +22,7 @@ import {
   Paper,
   Select,
   SelectChangeEvent,
+  TextField,
   Typography,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
@@ -76,83 +77,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [showProviderKeyModal, setShowProviderKeyModal] = useState(false)
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
-
-  // TEMPORARILY DISABLED AUTH: Comment out authentication check
-  // useEffect(() => {
-  //   async function getUser() {
-  //     try {
-  //       // Get user
-  //       const {
-  //         data: { session },
-  //       } = await supabase.auth.getSession()
-
-  //       if (!session) {
-  //         router.push('/auth/signin')
-  //         return
-  //       }
-
-  //       setUser(session.user)
-
-  //       if (session.user) {
-  //         // Get user profile
-  //         const { data: profileData, error: profileError } = await supabase
-  //           .from('profiles')
-  //           .select('*')
-  //           .eq('id', session.user.id)
-  //           .single()
-
-  //         if (profileError) {
-  //           if (profileError.code === 'PGRST116') {
-  //             // Profile doesn't exist yet, create it using the server API
-  //             try {
-  //               // Call our server-side API to create the profile
-  //               const response = await fetch('/api/profile/create', {
-  //                 method: 'POST',
-  //                 headers: {
-  //                   'Content-Type': 'application/json',
-  //                 },
-  //               })
-
-  //               const result = await response.json()
-
-  //               if (response.ok && result.success && result.profile) {
-  //                 setProfile(result.profile as UserProfile)
-  //               } else {
-  //                 setError(
-  //                   'Error creating profile. Please try refreshing the page or contact support.',
-  //                 )
-  //               }
-  //             } catch (err) {
-  //               setError(
-  //                 'Error creating profile. Please try refreshing the page or contact support.',
-  //               )
-  //             }
-  //           } else {
-  //             setError(
-  //               'Error fetching profile. Please try refreshing the page or contact support.',
-  //             )
-  //           }
-  //         } else {
-  //           setProfile(profileData as UserProfile)
-  //         }
-  //       }
-  //     } catch (error) {
-  //       setError('Authentication error. Please try signing in again.')
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-
-  //   getUser()
-  // }, [router, supabase])
-
-  // TEMPORARILY DISABLED AUTH: Comment out redirect
-  // useEffect(() => {
-  //   // Redirect if not authenticated and not loading
-  //   if (!loading && !user && !isAuthLoading && !contextUser) {
-  //     router.push('/auth/signin')
-  //   }
-  // }, [loading, user, isAuthLoading, contextUser, router])
+  const [prompt, setPrompt] = useState<string>('')
 
   const handleFileUpload = (file: File | null) => {
     if (file) {
@@ -196,30 +121,24 @@ export default function Dashboard() {
   }
 
   const handleGenerateImage = async () => {
-    if (!uploadedImage || !selectedProvider) return
+    if (!uploadedImage) {
+      setError('Please upload an image first')
+      return
+    }
 
     setGenerating(true)
-    setError(null)
     setGeneratedImageUrl(null)
-
-    // Use window.FormData to ensure it's defined in the browser context
-    const formData = new window.FormData()
-    formData.append('image', uploadedImage)
-    formData.append('provider', selectedProvider)
+    setError(null)
 
     try {
-      // TEMPORARILY DISABLED AUTH: Comment out profile checks
-      // // Check if user is on free tier and has already used their free generation
-      // if (
-      //   profile &&
-      //   profile.plan === 'free' &&
-      //   (profile.credits ?? 0) > 0 &&
-      //   !providerKeys[selectedProvider]
-      // ) {
-      //   setShowProviderKeyModal(true)
-      //   setGenerating(false)
-      //   return
-      // }
+      // Create a FormData object to send the image
+      const formData = new FormData()
+      formData.append('image', uploadedImage)
+      formData.append('provider', selectedProvider)
+      formData.append(
+        'prompt',
+        'Transform this image into Studio Ghibli style: ' + (prompt || ''),
+      )
 
       // Add API key if available
       if (providerKeys && providerKeys[selectedProvider]) {
@@ -255,7 +174,7 @@ export default function Dashboard() {
             errorText.includes('Gateway Timeout')
           ) {
             throw new Error(
-              'Server timeout error. The image generation is taking too long. Try using a simpler image or a different AI provider.',
+              'Server timeout error. Vercel free tier has a 10-second function limit which is often not enough for AI image generation. Try using a simpler image or consider upgrading to a paid plan for longer execution times.',
             )
           } else {
             // Log the error for debugging
@@ -274,36 +193,12 @@ export default function Dashboard() {
 
       const data = await response.json()
       setGeneratedImageUrl(data.imageUrl)
-
-      // TEMPORARILY DISABLED AUTH: Comment out profile update
-      // // If this was a free tier user's first generation, update their usage in the database
-      // if (
-      //   user &&
-      //   profile &&
-      //   profile.plan === 'free' &&
-      //   (profile.credits ?? 0) === 0 &&
-      //   !providerKeys[selectedProvider]
-      // ) {
-      //   const { error } = await supabase
-      //     .from('profiles')
-      //     .update({ credits: 1 })
-      //     .eq('id', user.id)
-
-      //   if (error) {
-      //     setError(
-      //       'Failed to update your usage. Your transformation was successful, but you may see this free option again.',
-      //     )
-      //   } else {
-      //     // Update local state
-      //     setProfile({ ...profile, credits: 1 })
-      //   }
-      // }
-    } catch (error: unknown) {
+    } catch (error) {
       setError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to generate image. Please try again.',
+        error instanceof Error ? error.message : 'Failed to generate image',
       )
+      // eslint-disable-next-line no-console
+      console.error('Error generating image:', error)
     } finally {
       setGenerating(false)
     }
@@ -410,36 +305,38 @@ export default function Dashboard() {
               />
 
               <Box sx={{ mt: 3 }}>
-                <FormControl fullWidth sx={{ mb: 3 }}>
-                  <InputLabel id='provider-select-label'>
-                    AI Provider
-                  </InputLabel>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id='ai-provider-label'>AI Provider</InputLabel>
                   <Select
-                    labelId='provider-select-label'
-                    id='provider-select'
+                    labelId='ai-provider-label'
+                    id='ai-provider'
                     value={selectedProvider}
                     label='AI Provider'
                     onChange={handleProviderChange}
                   >
                     {aiProviders.map(provider => (
-                      <MenuItem
-                        key={provider.id}
-                        value={provider.id}
-                        disabled={provider.disabled}
-                        sx={provider.disabled ? { opacity: 0.6 } : {}}
-                      >
-                        <Box>
-                          <Typography variant='body1'>
-                            {provider.name}
-                            {provider.disabled && ' (Coming Soon)'}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary'>
-                            {provider.description}
-                          </Typography>
-                        </Box>
+                      <MenuItem key={provider.id} value={provider.id}>
+                        {provider.name}
                       </MenuItem>
                     ))}
                   </Select>
+                </FormControl>
+
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id='prompt-label'>
+                    Custom Prompt (Optional)
+                  </InputLabel>
+                  <TextField
+                    id='prompt'
+                    label='Custom Prompt'
+                    placeholder='Add details to your Ghibli transformation'
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={2}
+                    variant='outlined'
+                  />
                 </FormControl>
 
                 <Button
