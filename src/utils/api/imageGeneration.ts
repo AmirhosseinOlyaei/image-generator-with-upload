@@ -4,7 +4,7 @@ import axios from 'axios'
 // In development, this will be localhost, in production it will be your deployed worker URL
 const WORKER_BASE_URL =
   process.env.NODE_ENV === 'production'
-    ? 'https://ghibli-vision-worker.workers.dev' // This will need to be updated with your actual worker URL after deployment
+    ? 'https://ghibli-vision-worker.amirholyaei.workers.dev' // Updated with your actual worker URL
     : 'http://localhost:8787'
 
 export interface GenerateImageParams {
