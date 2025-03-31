@@ -81,13 +81,14 @@ export default function SignUp() {
           {
             id: data.user.id,
             email: email,
-            free_image_used: false,
+            free_generations_used: 0,
             subscription_tier: 'free',
           },
         ])
 
         if (profileError) {
-          console.error('Error creating profile:', profileError)
+          setError(`Error creating profile: ${profileError.message}`)
+          return
         }
       }
 
@@ -97,8 +98,8 @@ export default function SignUp() {
       setTimeout(() => {
         router.push('/auth/signin')
       }, 5000)
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign up')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to sign up')
     } finally {
       setLoading(false)
     }
@@ -109,7 +110,7 @@ export default function SignUp() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -121,15 +122,15 @@ export default function SignUp() {
       }
 
       // No need to redirect, the OAuth flow handles this
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign up with Google')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to sign up with Google')
       setLoading(false)
     }
   }
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={null} loading={false} />
+      <MainAppBar />
 
       <Container component='main' maxWidth='sm' sx={{ flexGrow: 1, py: 8 }}>
         <Paper

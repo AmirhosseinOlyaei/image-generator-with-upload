@@ -45,7 +45,7 @@ export default function SignIn() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -55,8 +55,8 @@ export default function SignIn() {
       }
 
       router.push('/dashboard')
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to sign in')
     } finally {
       setLoading(false)
     }
@@ -67,7 +67,7 @@ export default function SignIn() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -79,15 +79,15 @@ export default function SignIn() {
       }
 
       // No need to redirect, the OAuth flow handles this
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in with Google')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to sign in with Google')
       setLoading(false)
     }
   }
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MainAppBar user={null} loading={false} />
+      <MainAppBar />
 
       <Container component='main' maxWidth='sm' sx={{ flexGrow: 1, py: 8 }}>
         <Paper

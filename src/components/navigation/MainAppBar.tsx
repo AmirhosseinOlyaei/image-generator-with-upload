@@ -1,7 +1,12 @@
 'use client'
 
-import { supabase } from '@/lib/supabase'
 import MenuIcon from '@mui/icons-material/Menu'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import LogoutIcon from '@mui/icons-material/Logout'
+import LoginIcon from '@mui/icons-material/Login'
+import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import {
   AppBar,
   Avatar,
@@ -14,6 +19,7 @@ import {
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
@@ -22,23 +28,106 @@ import {
 } from '@mui/material'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-interface MainAppBarProps {
-  user: any
-  loading: boolean
-}
-
-export default function MainAppBar({ user, loading }: MainAppBarProps) {
+export default function MainAppBar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [anchorEl, setAnchorEl] = useState<React.MouseEvent['currentTarget'] | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userAvatar, setUserAvatar] = useState<string | null>(null)
+  const supabase = createClientComponentClient()
+
+  // Helper function to safely fetch profile or create it if it doesn't exist
+  const safelyFetchProfile = async (userId: string) => {
+    try {
+      // First check if profile exists
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      // If profile doesn't exist, skip creation (we'll let useAuth handle it)
+      if (error && error.code === 'PGRST116') {
+        // Simply return null without attempting to create a profile here
+        return null;
+      } else if (error) {
+        // Log other errors but don't throw
+        // eslint-disable-next-line no-console
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+      
+      return data?.avatar_url || null;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error in profile operation:', err);
+      return null;
+    }
+  };
+
+  // Check authentication status directly from Supabase
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          throw error
+        }
+        
+        const isLoggedIn = !!data.session
+        setIsAuthenticated(isLoggedIn)
+        
+        // Get user avatar if authenticated
+        if (isLoggedIn && data.session) {
+          const avatarUrl = await safelyFetchProfile(data.session.user.id);
+          if (avatarUrl) {
+            setUserAvatar(avatarUrl);
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error checking auth status:', error)
+        setIsAuthenticated(false)
+      }
+    }
+
+    checkAuthStatus()
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(true)
+        
+        // Get user avatar if available
+        if (session) {
+          (async () => {
+            const avatarUrl = await safelyFetchProfile(session.user.id);
+            if (avatarUrl) {
+              setUserAvatar(avatarUrl);
+            }
+          })();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false)
+        setUserAvatar(null)
+      }
+    })
+    
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
   }
 
-  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+  const handleMenu = (event: React.MouseEvent) => {
     setAnchorEl(event.currentTarget)
   }
 
@@ -47,85 +136,159 @@ export default function MainAppBar({ user, loading }: MainAppBarProps) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setAnchorEl(null)
-    router.push('/')
-    router.refresh()
+    try {
+      await supabase.auth.signOut()
+      setIsAuthenticated(false)
+      setUserAvatar(null)
+      setAnchorEl(null)
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error signing out:', error)
+    }
+  }
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+    handleClose()
+    setMobileOpen(false)
   }
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Features', path: '/#how-it-works' },
-    { name: 'Pricing', path: '/pricing' },
+    { name: 'How It Works', path: '/#how-it-works' },
+    { name: 'Pricing', path: '/#pricing' },
   ]
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-      <Typography
-        variant='h6'
-        sx={{ my: 2, fontWeight: 'bold', color: 'primary.main' }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2,
+          bgcolor: 'primary.main',
+          color: 'white',
+        }}
       >
-        Ghibli Vision
-      </Typography>
+        <AutoFixHighIcon sx={{ mr: 1 }} />
+        <Typography variant='h6' component='div'>
+          Ghibli Vision
+        </Typography>
+      </Box>
       <Divider />
-      <List>
-        {navItems.map(item => (
+      <List sx={{ py: 2 }}>
+        {navItems.map((item) => (
           <ListItem key={item.name} disablePadding>
             <ListItemButton
-              sx={{ textAlign: 'center' }}
               component={Link}
               href={item.path}
+              sx={{ 
+                textAlign: 'center',
+                py: 1.5,
+                '&:hover': {
+                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                }
+              }}
             >
               <ListItemText primary={item.name} />
             </ListItemButton>
           </ListItem>
         ))}
-        {!loading && !user && (
+        <Divider sx={{ my: 1 }} />
+        {isAuthenticated ? (
           <>
             <ListItem disablePadding>
               <ListItemButton
-                sx={{ textAlign: 'center' }}
-                component={Link}
-                href='/auth/signin'
+                onClick={() => handleNavigation('/dashboard')}
+                sx={{ 
+                  textAlign: 'left',
+                  py: 1.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  }
+                }}
               >
+                <ListItemIcon>
+                  <DashboardIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary='Studio' />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleNavigation('/profile')}
+                sx={{ 
+                  textAlign: 'left',
+                  py: 1.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <AccountCircleIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary='Profile' />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{ 
+                  textAlign: 'left',
+                  py: 1.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <LogoutIcon color="error" />
+                </ListItemIcon>
+                <ListItemText primary='Logout' />
+              </ListItemButton>
+            </ListItem>
+          </>
+        ) : (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleNavigation('/auth/signin')}
+                sx={{ 
+                  textAlign: 'left',
+                  py: 1.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <LoginIcon color="primary" />
+                </ListItemIcon>
                 <ListItemText primary='Sign In' />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                sx={{
-                  textAlign: 'center',
-                  bgcolor: 'primary.main',
-                  color: 'white',
+                onClick={() => handleNavigation('/auth/signup')}
+                sx={{ 
+                  textAlign: 'left',
+                  py: 1.5,
                   '&:hover': {
-                    bgcolor: 'primary.dark',
-                  },
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  }
                 }}
-                component={Link}
-                href='/auth/signup'
               >
+                <ListItemIcon>
+                  <PersonAddIcon color="secondary" />
+                </ListItemIcon>
                 <ListItemText primary='Sign Up' />
               </ListItemButton>
             </ListItem>
           </>
-        )}
-        {!loading && user && (
-          <ListItem disablePadding>
-            <ListItemButton
-              sx={{
-                textAlign: 'center',
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                },
-              }}
-              component={Link}
-              href='/dashboard'
-            >
-              <ListItemText primary='Dashboard' />
-            </ListItemButton>
-          </ListItem>
         )}
       </List>
     </Box>
@@ -133,18 +296,19 @@ export default function MainAppBar({ user, loading }: MainAppBarProps) {
 
   return (
     <>
-      <AppBar
-        position='fixed'
-        color='default'
+      <AppBar 
+        position='static' 
+        color='default' 
         elevation={0}
-        sx={{
-          bgcolor: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(10px)',
+        sx={{ 
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
         }}
       >
         <Container maxWidth='xl'>
-          <Toolbar disableGutters>
-            {/* Mobile menu icon */}
+          <Toolbar disableGutters sx={{ minHeight: { xs: 64, sm: 70 } }}>
+            {/* Mobile menu button */}
             <IconButton
               color='inherit'
               aria-label='open drawer'
@@ -156,88 +320,118 @@ export default function MainAppBar({ user, loading }: MainAppBarProps) {
             </IconButton>
 
             {/* Logo */}
-            <Typography
-              variant='h6'
-              component={Link}
-              href='/'
-              sx={{
-                mr: 2,
-                fontWeight: 700,
-                color: 'primary.main',
+            <Box 
+              component={Link} 
+              href="/"
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
                 textDecoration: 'none',
-                flexGrow: { xs: 1, sm: 0 },
+                color: 'inherit',
+                '&:hover': {
+                  textDecoration: 'none',
+                }
               }}
             >
-              Ghibli Vision
-            </Typography>
+              <AutoFixHighIcon
+                sx={{
+                  display: { xs: 'none', sm: 'flex' },
+                  mr: 1,
+                  color: 'primary.main',
+                  fontSize: 32,
+                }}
+              />
+              <Typography
+                variant='h6'
+                noWrap
+                sx={{
+                  mr: 2,
+                  fontWeight: 700,
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  letterSpacing: '.1rem',
+                }}
+              >
+                GHIBLI VISION
+              </Typography>
+            </Box>
 
             {/* Desktop navigation */}
             <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' } }}>
-              {navItems.map(item => (
+              {navItems.map((item) => (
                 <Button
                   key={item.name}
                   component={Link}
                   href={item.path}
-                  sx={{ color: 'text.primary', mx: 1 }}
+                  sx={{
+                    mx: 1,
+                    color: 'text.primary',
+                    position: 'relative',
+                    '&:after': {
+                      content: '""',
+                      position: 'absolute',
+                      width: '0',
+                      height: '2px',
+                      bottom: '0',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'primary.main',
+                      transition: 'width 0.3s',
+                    },
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                      '&:after': {
+                        width: '80%',
+                      },
+                    },
+                  }}
                 >
                   {item.name}
                 </Button>
               ))}
             </Box>
 
-            {/* Auth buttons or user menu */}
+            {/* User menu */}
             <Box
               sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}
             >
-              {!loading && !user && (
-                <>
-                  <Button
-                    component={Link}
-                    href='/auth/signin'
-                    sx={{ color: 'text.primary', mr: 1 }}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    component={Link}
-                    href='/auth/signup'
-                    variant='contained'
-                    color='primary'
-                  >
-                    Sign Up
-                  </Button>
-                </>
-              )}
-
-              {!loading && user && (
+              {isAuthenticated ? (
                 <>
                   <Button
                     component={Link}
                     href='/dashboard'
+                    variant='outlined'
                     color='primary'
+                    startIcon={<DashboardIcon />}
                     sx={{ mr: 2 }}
                   >
-                    Dashboard
+                    Studio
                   </Button>
-
                   <IconButton
                     onClick={handleMenu}
-                    size='small'
+                    size='large'
                     edge='end'
                     aria-label='account of current user'
                     aria-haspopup='true'
+                    color='inherit'
+                    sx={{ 
+                      ml: 1,
+                      border: '2px solid',
+                      borderColor: 'primary.light',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      }
+                    }}
                   >
-                    <Avatar
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: 'primary.main',
-                        border: '2px solid',
-                        borderColor: 'primary.light',
-                      }}
-                    >
-                      {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                    </Avatar>
+                    {userAvatar ? (
+                      <Avatar 
+                        src={userAvatar} 
+                        alt="User avatar"
+                        sx={{ width: 32, height: 32 }}
+                      />
+                    ) : (
+                      <AccountCircleIcon />
+                    )}
                   </IconButton>
                   <Menu
                     id='menu-appbar'
@@ -253,24 +447,104 @@ export default function MainAppBar({ user, loading }: MainAppBarProps) {
                     }}
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
+                    PaperProps={{
+                      elevation: 3,
+                      sx: {
+                        mt: 1.5,
+                        minWidth: 180,
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                        '&:before': {
+                          content: '""',
+                          display: 'block',
+                          position: 'absolute',
+                          top: 0,
+                          right: 14,
+                          width: 10,
+                          height: 10,
+                          bgcolor: 'background.paper',
+                          transform: 'translateY(-50%) rotate(45deg)',
+                          zIndex: 0,
+                        },
+                      },
+                    }}
                   >
                     <MenuItem
-                      component={Link}
-                      href='/profile'
-                      onClick={handleClose}
+                      onClick={() => handleNavigation('/profile')}
+                      sx={{ 
+                        py: 1.5,
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        }
+                      }}
                     >
+                      <ListItemIcon>
+                        <AccountCircleIcon fontSize="small" color="primary" />
+                      </ListItemIcon>
                       Profile
                     </MenuItem>
                     <MenuItem
-                      component={Link}
-                      href='/dashboard'
-                      onClick={handleClose}
+                      onClick={() => handleNavigation('/dashboard')}
+                      sx={{ 
+                        py: 1.5,
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        }
+                      }}
                     >
-                      Dashboard
+                      <ListItemIcon>
+                        <DashboardIcon fontSize="small" color="primary" />
+                      </ListItemIcon>
+                      Studio
                     </MenuItem>
                     <Divider />
-                    <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
+                    <MenuItem 
+                      onClick={handleLogout}
+                      sx={{ 
+                        py: 1.5,
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <LogoutIcon fontSize="small" color="error" />
+                      </ListItemIcon>
+                      Sign Out
+                    </MenuItem>
                   </Menu>
+                </>
+              ) : (
+                <>
+                  <Button
+                    component={Link}
+                    href='/auth/signin'
+                    sx={{ 
+                      color: 'text.primary', 
+                      mr: 1,
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      }
+                    }}
+                    startIcon={<LoginIcon />}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    component={Link}
+                    href='/auth/signup'
+                    variant='contained'
+                    color='primary'
+                    startIcon={<PersonAddIcon />}
+                    sx={{
+                      boxShadow: 2,
+                      '&:hover': {
+                        boxShadow: 4,
+                      },
+                    }}
+                  >
+                    Sign Up
+                  </Button>
                 </>
               )}
             </Box>
@@ -288,14 +562,14 @@ export default function MainAppBar({ user, loading }: MainAppBarProps) {
         }}
         sx={{
           display: { xs: 'block', sm: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: 280,
+          },
         }}
       >
         {drawer}
       </Drawer>
-
-      {/* Toolbar placeholder to prevent content from hiding behind app bar */}
-      <Toolbar />
     </>
   )
 }

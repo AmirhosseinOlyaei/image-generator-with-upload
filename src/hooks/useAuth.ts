@@ -21,10 +21,35 @@ export const useAuth = () => {
   const router = useRouter()
   const supabase = createClientComponentClient()
 
+  // Helper function to just fetch profile without creation
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        // Just return null for any error - don't throw or log
+        return null;
+      }
+      
+      return data;
+    } catch (err) {
+      // Just return null for any error - don't throw or log
+      return null;
+    }
+  };
+
   // Check if the user is authenticated and load profile data
   useEffect(() => {
+    let mounted = true;
+    
     const fetchUserData = async () => {
       try {
+        setState(prev => ({ ...prev, loading: true }));
+        
         // Get current session
         const {
           data: { session },
@@ -36,35 +61,33 @@ export const useAuth = () => {
         }
 
         if (!session) {
-          setState({ user: null, profile: null, loading: false, error: null })
+          if (mounted) {
+            setState({ user: null, profile: null, loading: false, error: null })
+          }
           return
         }
 
-        // Get user profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+        // Only fetch profile, don't try to create it
+        const profileData = await fetchProfile(session.user.id);
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          // PGRST116 is "no rows returned" error
-          throw profileError
+        if (mounted) {
+          setState({
+            user: session.user,
+            profile: profileData,
+            loading: false,
+            error: null,
+          })
         }
-
-        setState({
-          user: session.user,
-          profile: profileData || null,
-          loading: false,
-          error: null,
-        })
-      } catch (error: any) {
-        setState({
-          user: null,
-          profile: null,
-          loading: false,
-          error: error.message || 'An error occurred while fetching user data',
-        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching user data'
+        if (mounted) {
+          setState({
+            user: null,
+            profile: null,
+            loading: false,
+            error: errorMessage,
+          })
+        }
       }
     }
 
@@ -76,29 +99,46 @@ export const useAuth = () => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session) {
-          // Get user profile data
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
+          try {
+            // Only fetch profile, don't try to create it
+            const profileData = await fetchProfile(session.user.id);
 
-          setState({
-            user: session.user,
-            profile: profileData || null,
-            loading: false,
-            error: null,
-          })
+            if (mounted) {
+              setState({
+                user: session.user,
+                profile: profileData,
+                loading: false,
+                error: null,
+              })
+              
+              // Force router refresh to update components that depend on auth state
+              router.refresh()
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to load profile';
+            if (mounted) {
+              setState({
+                user: session.user,
+                profile: null,
+                loading: false,
+                error: errorMessage,
+              });
+            }
+          }
         }
       }
 
       if (event === 'SIGNED_OUT') {
-        setState({ user: null, profile: null, loading: false, error: null })
-        router.push('/')
+        if (mounted) {
+          setState({ user: null, profile: null, loading: false, error: null })
+          router.push('/')
+          router.refresh()
+        }
       }
     })
 
     return () => {
+      mounted = false;
       subscription.unsubscribe()
     }
   }, [supabase, router])
@@ -107,7 +147,7 @@ export const useAuth = () => {
   const signIn = async (email: string, password: string) => {
     try {
       setState({ ...state, loading: true, error: null })
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -116,16 +156,27 @@ export const useAuth = () => {
         throw error
       }
 
-      router.push('/dashboard')
-    } catch (error: any) {
+      // Ensure we have a session
+      if (!data.session) {
+        throw new Error('No session returned after sign in')
+      }
+
+      // Wait a moment for the auth state to update
+      setTimeout(() => {
+        router.push('/dashboard')
+        router.refresh()
+      }, 300)
+      
+      return true
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in'
       setState({
         ...state,
         loading: false,
-        error: error.message || 'Failed to sign in',
+        error: errorMessage,
       })
       return false
     }
-    return true
   }
 
   // Sign in with Google
@@ -142,15 +193,16 @@ export const useAuth = () => {
       if (error) {
         throw error
       }
-    } catch (error: any) {
+      return true
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in with Google'
       setState({
         ...state,
         loading: false,
-        error: error.message || 'Failed to sign in with Google',
+        error: errorMessage,
       })
       return false
     }
-    return true
   }
 
   // Sign up with email and password
@@ -162,7 +214,7 @@ export const useAuth = () => {
     try {
       setState({ ...state, loading: true, error: null })
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -177,33 +229,23 @@ export const useAuth = () => {
         throw error
       }
 
-      // Create a profile for the new user
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert([
-          {
-            id: data.user.id,
-            display_name: displayName,
-            email: email,
-            free_generations_used: 0,
-            subscription_tier: 'free',
-          },
-        ])
+      // Do not attempt to create profile here - this will be handled by an external process like a Supabase function or hook
 
-        if (profileError) {
-          throw profileError
-        }
-      }
-
-      router.push('/dashboard')
-    } catch (error: any) {
+      setTimeout(() => {
+        router.push('/dashboard')
+        router.refresh()
+      }, 300)
+      
+      return true
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign up'
       setState({
         ...state,
         loading: false,
-        error: error.message || 'Failed to sign up',
+        error: errorMessage,
       })
       return false
     }
-    return true
   }
 
   // Sign out
@@ -216,16 +258,27 @@ export const useAuth = () => {
         throw error
       }
 
+      // Clear auth state
+      setState({
+        user: null,
+        profile: null,
+        loading: false,
+        error: null,
+      })
+      
+      // Redirect to homepage and force refresh
       router.push('/')
-    } catch (error: any) {
+      router.refresh()
+      return true
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign out'
       setState({
         ...state,
         loading: false,
-        error: error.message || 'Failed to sign out',
+        error: errorMessage,
       })
       return false
     }
-    return true
   }
 
   // Update profile
@@ -265,11 +318,12 @@ export const useAuth = () => {
       })
 
       return true
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile'
       setState({
         ...state,
         loading: false,
-        error: error.message || 'Failed to update profile',
+        error: errorMessage,
       })
       return false
     }
