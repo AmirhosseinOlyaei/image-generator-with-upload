@@ -25,12 +25,10 @@ import React, { useState } from 'react'
 export default function MainAppBar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [anchorEl, setAnchorEl] = useState<
-    React.MouseEvent['currentTarget'] | null
-  >(null)
+  const [_anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   // TEMPORARILY DISABLED AUTH: Set isAuthenticated to false by default
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userAvatar, setUserAvatar] = useState<string | null>(null)
+  const [_isAuthenticated, setIsAuthenticated] = useState(false)
+  const [_userAvatar, setUserAvatar] = useState<string | null>(null)
   const supabase = createClientComponentClient()
 
   // TEMPORARILY DISABLED AUTH: Comment out authentication check
@@ -122,7 +120,7 @@ export default function MainAppBar() {
     setMobileOpen(!mobileOpen)
   }
 
-  const handleMenu = (event: React.MouseEvent) => {
+  const _handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
   }
 
@@ -130,7 +128,7 @@ export default function MainAppBar() {
     setAnchorEl(null)
   }
 
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     try {
       await supabase.auth.signOut()
       setIsAuthenticated(false)
@@ -144,7 +142,7 @@ export default function MainAppBar() {
     }
   }
 
-  const handleNavigation = (path: string) => {
+  const _handleNavigation = (path: string) => {
     router.push(path)
     handleClose()
     setMobileOpen(false)

@@ -331,7 +331,7 @@ export default function Dashboard() {
                     label='Custom Prompt'
                     placeholder='Add details to your Ghibli transformation'
                     value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    onChange={e => setPrompt(e.target.value)}
                     fullWidth
                     multiline
                     rows={2}
