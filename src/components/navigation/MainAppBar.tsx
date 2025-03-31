@@ -1,15 +1,9 @@
 'use client'
 
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import LoginIcon from '@mui/icons-material/Login'
-import LogoutIcon from '@mui/icons-material/Logout'
 import MenuIcon from '@mui/icons-material/Menu'
-import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import {
   AppBar,
-  Avatar,
   Box,
   Button,
   Container,
@@ -19,17 +13,14 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
   Toolbar,
   Typography,
 } from '@mui/material'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 export default function MainAppBar() {
   const router = useRouter()
@@ -161,10 +152,10 @@ export default function MainAppBar() {
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'How It Works', path: '/#how-it-works' },
-    { name: 'Pricing', path: '/#pricing' },
-    // TEMPORARILY DISABLED AUTH: Always show dashboard link
     { name: 'Studio', path: '/dashboard' },
+    { name: 'How It Works', path: '/#how-it-works' },
+    { name: 'Pricing', path: '/pricing' },
+    // TEMPORARILY DISABLED AUTH: Always show dashboard link
   ]
 
   const drawer = (

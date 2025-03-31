@@ -61,12 +61,14 @@ export default function Home() {
     }
   }, [supabase])
 
+  // TEMPORARILY DISABLED AUTH: Always redirect to dashboard
   const handleGetStarted = () => {
-    if (isAuthenticated) {
-      router.push('/dashboard')
-    } else {
-      router.push('/auth/signin')
-    }
+    router.push('/dashboard')
+    // if (isAuthenticated) {
+    //   router.push('/dashboard')
+    // } else {
+    //   router.push('/auth/signin')
+    // }
   }
 
   return (
@@ -118,7 +120,7 @@ export default function Home() {
               variant='contained'
               size='large'
               onClick={handleGetStarted}
-              disabled={isCheckingAuth}
+              // disabled={isCheckingAuth}
               sx={{
                 py: 2,
                 px: 4,

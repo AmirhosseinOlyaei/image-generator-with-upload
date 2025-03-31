@@ -28,7 +28,7 @@ export default function ImageUpload({
         const canvas = document.createElement('canvas')
         canvas.width = img.width
         canvas.height = img.height
-        
+
         // Draw the image on the canvas
         const ctx = canvas.getContext('2d')
         if (!ctx) {
@@ -36,69 +36,77 @@ export default function ImageUpload({
           return
         }
         ctx.drawImage(img, 0, 0)
-        
+
         // Convert to PNG
-        canvas.toBlob((blob) => {
+        canvas.toBlob(blob => {
           if (!blob) {
             reject(new Error('Failed to convert image to PNG'))
             return
           }
-          
-          // Check if the blob size is less than 4MB
-          if (blob.size > 4 * 1024 * 1024) {
-            // If larger than 4MB, resize the image
-            const scaleFactor = Math.sqrt((4 * 1024 * 1024) / blob.size)
+
+          // Check if the blob size is less than 10MB
+          if (blob.size > 10 * 1024 * 1024) {
+            // If larger than 10MB, resize the image
+            const scaleFactor = Math.sqrt((10 * 1024 * 1024) / blob.size)
             const newWidth = Math.floor(img.width * scaleFactor)
             const newHeight = Math.floor(img.height * scaleFactor)
-            
+
             // Create a new canvas for the resized image
             const resizeCanvas = document.createElement('canvas')
             resizeCanvas.width = newWidth
             resizeCanvas.height = newHeight
-            
+
             // Draw the resized image
             const resizeCtx = resizeCanvas.getContext('2d')
             if (!resizeCtx) {
               reject(new Error('Failed to get resize canvas context'))
               return
             }
-            
+
             resizeCtx.drawImage(img, 0, 0, newWidth, newHeight)
-            
+
             // Convert the resized image to PNG
-            resizeCanvas.toBlob((resizedBlob) => {
+            resizeCanvas.toBlob(resizedBlob => {
               if (!resizedBlob) {
                 reject(new Error('Failed to convert resized image to PNG'))
                 return
               }
-              
+
               // Create a new File object with the PNG blob
-              const pngFile = new File([resizedBlob], file.name.replace(/\.[^/.]+$/, '') + '.png', {
-                type: 'image/png',
-                lastModified: file.lastModified,
-              })
-              
+              const pngFile = new File(
+                [resizedBlob],
+                file.name.replace(/\.[^/.]+$/, '') + '.png',
+                {
+                  type: 'image/png',
+                  lastModified: file.lastModified,
+                },
+              )
+
               resolve(pngFile)
             }, 'image/png')
           } else {
-            // If less than 4MB, use the original size
-            const pngFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.png', {
-              type: 'image/png',
-              lastModified: file.lastModified,
-            })
-            
+            // If less than 10MB, use the original size
+            const pngFile = new File(
+              [blob],
+              file.name.replace(/\.[^/.]+$/, '') + '.png',
+              {
+                type: 'image/png',
+                lastModified: file.lastModified,
+              },
+            )
+
             resolve(pngFile)
           }
         }, 'image/png')
       }
-      
+
       img.onerror = () => {
         reject(new Error('Failed to load image'))
       }
-      
+
       // Load the image from the file
       const reader = new FileReader()
-      reader.onload = (e) => {
+      reader.onload = e => {
         if (e.target?.result) {
           img.src = e.target.result as string
         } else {
@@ -128,9 +136,9 @@ export default function ImageUpload({
     setError(null)
 
     try {
-      // Convert the image to a valid PNG format and ensure it's under 4MB
+      // Convert the image to a valid PNG format and ensure it's under 10MB
       const processedFile = await convertToValidPNG(file)
-      
+
       // Pass the processed file to the parent component
       onFileSelected(processedFile)
     } catch (error) {
@@ -290,7 +298,7 @@ export default function ImageUpload({
                 Supported formats: JPEG, PNG, WebP (will be converted to PNG)
               </Typography>
               <Typography variant='caption' color='text.secondary'>
-                Maximum size: 4MB
+                Maximum size: 10MB
               </Typography>
             </>
           )}
