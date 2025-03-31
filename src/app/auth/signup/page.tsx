@@ -1,61 +1,66 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  TextField, 
-  Button, 
-  Grid, 
-  Paper, 
-  Divider,
-  InputAdornment,
-  IconButton,
+import Footer from "@/components/navigation/Footer"
+import MainAppBar from "@/components/navigation/MainAppBar"
+import { supabase } from "@/lib/supabase"
+import {
+  Email,
+  Google,
+  Lock,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material"
+import {
   Alert,
-  CircularProgress,
+  Box,
+  Button,
   Checkbox,
-  FormControlLabel
-} from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock, Google, Person } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
-import MainAppBar from '@/components/navigation/MainAppBar';
-import Footer from '@/components/navigation/Footer';
+  CircularProgress,
+  Container,
+  Divider,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function SignUp() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
   const handleTogglePassword = () => {
-    setShowPassword(!showPassword);
-  };
-  
+    setShowPassword(!showPassword)
+  }
+
   const handleEmailSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    
+    e.preventDefault()
+    setError(null)
+
     // Validation
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
-      return;
+      setError("Passwords don't match")
+      return
     }
-    
+
     if (!agreeTerms) {
-      setError("You must agree to the terms and conditions");
-      return;
+      setError("You must agree to the terms and conditions")
+      return
     }
-    
-    setLoading(true);
-    
+
+    setLoading(true)
+
     try {
       // Create the user
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -63,115 +68,123 @@ export default function SignUp() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-        }
-      });
-      
+        },
+      })
+
       if (signUpError) {
-        throw signUpError;
+        throw signUpError
       }
-      
+
       // Create a profile entry for the user with free image usage tracking
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            { 
-              id: data.user.id, 
-              email: email, 
-              free_image_used: false,
-              subscription_tier: 'free'
-            }
-          ]);
-          
+        const { error: profileError } = await supabase.from("profiles").insert([
+          {
+            id: data.user.id,
+            email: email,
+            free_image_used: false,
+            subscription_tier: "free",
+          },
+        ])
+
         if (profileError) {
-          console.error("Error creating profile:", profileError);
+          console.error("Error creating profile:", profileError)
         }
       }
-      
-      setSuccess("Registration successful! Please check your email to confirm your account.");
+
+      setSuccess(
+        "Registration successful! Please check your email to confirm your account."
+      )
       setTimeout(() => {
-        router.push('/auth/signin');
-      }, 5000);
+        router.push("/auth/signin")
+      }, 5000)
     } catch (error: any) {
-      setError(error.message || 'Failed to sign up');
+      setError(error.message || "Failed to sign up")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-  
+  }
+
   const handleGoogleSignUp = async () => {
-    setLoading(true);
-    setError(null);
-    
+    setLoading(true)
+    setError(null)
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      });
-      
+      })
+
       if (error) {
-        throw error;
+        throw error
       }
-      
+
       // No need to redirect, the OAuth flow handles this
     } catch (error: any) {
-      setError(error.message || 'Failed to sign up with Google');
-      setLoading(false);
+      setError(error.message || "Failed to sign up with Google")
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <MainAppBar user={null} loading={false} />
-      
+
       <Container component="main" maxWidth="sm" sx={{ flexGrow: 1, py: 8 }}>
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: { xs: 3, md: 5 }, 
+        <Paper
+          elevation={3}
+          sx={{
+            p: { xs: 3, md: 5 },
             borderRadius: 2,
-            backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url("/images/ghibli-pattern-light.png")',
-            backgroundSize: 'cover',
-            boxShadow: '0 8px 40px rgba(0, 0, 0, 0.12)'
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url("https://images.unsplash.com/photo-1558470598-a5dda9640f68?q=80&w=300&auto=format&fit=crop")',
+            backgroundSize: "cover",
+            boxShadow: "0 8px 40px rgba(0, 0, 0, 0.12)",
           }}
         >
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          <Box sx={{ mb: 4, textAlign: "center" }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              sx={{ fontWeight: "bold", color: "primary.main" }}
+            >
               Join Ghibli Vision
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Create an account to transform your photos into Ghibli-style artwork
+              Create an account to transform your photos into Ghibli-style
+              artwork
             </Typography>
-            
-            <Box 
-              sx={{ 
-                mt: 2, 
-                p: 2, 
-                bgcolor: 'rgba(247, 181, 56, 0.1)', 
-                borderRadius: 1, 
-                border: '1px solid rgba(247, 181, 56, 0.3)'
+
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                bgcolor: "rgba(247, 181, 56, 0.1)",
+                borderRadius: 1,
+                border: "1px solid rgba(247, 181, 56, 0.3)",
               }}
             >
               <Typography variant="body2" color="text.secondary" align="center">
-                <strong>Free Account Benefit:</strong> Get one free Ghibli-style transformation!
+                <strong>Free Account Benefit:</strong> Get one free Ghibli-style
+                transformation!
               </Typography>
             </Box>
           </Box>
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
-          
+
           {success && (
             <Alert severity="success" sx={{ mb: 3 }}>
               {success}
             </Alert>
           )}
-          
+
           <Box component="form" onSubmit={handleEmailSignUp} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
@@ -198,7 +211,7 @@ export default function SignUp() {
               fullWidth
               name="password"
               label="Password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               id="password"
               autoComplete="new-password"
               value={password}
@@ -228,7 +241,7 @@ export default function SignUp() {
               fullWidth
               name="confirmPassword"
               label="Confirm Password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -240,31 +253,37 @@ export default function SignUp() {
                 ),
               }}
             />
-            
+
             <FormControlLabel
               control={
-                <Checkbox 
-                  value="agree" 
-                  color="primary" 
+                <Checkbox
+                  value="agree"
+                  color="primary"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
                 />
               }
               label={
                 <Typography variant="body2">
-                  I agree to the{' '}
-                  <Link href="/terms" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                  I agree to the{" "}
+                  <Link
+                    href="/terms"
+                    style={{ color: "inherit", textDecoration: "underline" }}
+                  >
                     Terms of Service
-                  </Link>
-                  {' '}and{' '}
-                  <Link href="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="/privacy"
+                    style={{ color: "inherit", textDecoration: "underline" }}
+                  >
                     Privacy Policy
                   </Link>
                 </Typography>
               }
               sx={{ mt: 2 }}
             />
-            
+
             <Button
               type="submit"
               fullWidth
@@ -272,34 +291,38 @@ export default function SignUp() {
               color="primary"
               size="large"
               disabled={loading || !agreeTerms}
-              sx={{ 
-                mt: 3, 
+              sx={{
+                mt: 3,
                 mb: 2,
                 py: 1.5,
-                position: 'relative'
+                position: "relative",
               }}
             >
               {loading ? (
-                <CircularProgress size={24} color="inherit" sx={{ position: 'absolute' }} />
+                <CircularProgress
+                  size={24}
+                  color="inherit"
+                  sx={{ position: "absolute" }}
+                />
               ) : (
-                'Sign Up'
+                "Sign Up"
               )}
             </Button>
-            
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Link href="/auth/signin" style={{ textDecoration: 'none' }}>
+
+            <Box sx={{ textAlign: "center", mb: 2 }}>
+              <Link href="/auth/signin" style={{ textDecoration: "none" }}>
                 <Typography variant="body2" color="primary">
                   Already have an account? Sign In
                 </Typography>
               </Link>
             </Box>
-            
+
             <Divider sx={{ my: 3 }}>
               <Typography variant="body2" color="text.secondary">
                 OR
               </Typography>
             </Divider>
-            
+
             <Button
               fullWidth
               variant="outlined"
@@ -308,7 +331,7 @@ export default function SignUp() {
               startIcon={<Google />}
               onClick={handleGoogleSignUp}
               disabled={loading}
-              sx={{ 
+              sx={{
                 py: 1.5,
                 borderWidth: 2,
               }}
@@ -318,8 +341,8 @@ export default function SignUp() {
           </Box>
         </Paper>
       </Container>
-      
+
       <Footer />
     </Box>
-  );
+  )
 }

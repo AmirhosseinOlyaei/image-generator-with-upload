@@ -14,6 +14,7 @@ export type UserProfile = {
   avatar_url?: string;
   free_generations_used: number;
   subscription_tier: 'free' | 'basic' | 'premium' | 'ultimate';
+  custom_api_key?: string;
   provider_keys?: {
     openai?: string;
     stability?: string;
