@@ -33,33 +33,33 @@ export async function middleware(req: NextRequest) {
     // Get the pathname from the URL
     const { pathname } = req.nextUrl
 
-    // Allow public paths to proceed without authentication
-    const publicPaths = ['/', '/auth/callback', '/auth/signin', '/auth/signup']
+    // Allow all paths to proceed without authentication
+    const publicPaths = ['/*']
     if (publicPaths.includes(pathname) || pathname.startsWith('/_next')) {
       return res
     }
 
     // If there's no session and the request is for a protected route, redirect to login
-    if (
-      !session &&
-      (pathname.startsWith('/dashboard') || pathname.startsWith('/profile'))
-    ) {
-      const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/auth/signin'
-      redirectUrl.searchParams.set('redirectedFrom', pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
+    // if (
+    //   !session &&
+    //   (pathname.startsWith('/dashboard') || pathname.startsWith('/profile'))
+    // ) {
+    //   const redirectUrl = req.nextUrl.clone()
+    //   redirectUrl.pathname = '/auth/signin'
+    //   redirectUrl.searchParams.set('redirectedFrom', pathname)
+    //   return NextResponse.redirect(redirectUrl)
+    // }
 
     // If there is a session and the user is trying to access auth pages, redirect to dashboard
-    if (
-      session &&
-      (pathname.startsWith('/auth/signin') ||
-        pathname.startsWith('/auth/signup'))
-    ) {
-      const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/dashboard'
-      return NextResponse.redirect(redirectUrl)
-    }
+    // if (
+    //   session &&
+    //   (pathname.startsWith('/auth/signin') ||
+    //     pathname.startsWith('/auth/signup'))
+    // ) {
+    //   const redirectUrl = req.nextUrl.clone()
+    //   redirectUrl.pathname = '/dashboard'
+    //   return NextResponse.redirect(redirectUrl)
+    // }
 
     return res
   } catch (error) {
