@@ -39,14 +39,14 @@ const nextConfig = {
           vendors: false,
         },
       }
-      
+
       // Reduce the number of chunks
       config.optimization.runtimeChunk = false
-      
+
       // Minimize the main bundle
       config.optimization.minimize = true
     }
-    
+
     return config
   },
 }

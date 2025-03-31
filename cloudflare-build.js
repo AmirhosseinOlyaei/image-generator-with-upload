@@ -49,7 +49,9 @@ execSync(`cp -R public ${deployDir}/`, { stdio: 'inherit' })
 
 // Copy .next/static to _next/static
 fs.mkdirSync(`${deployDir}/_next/static`, { recursive: true })
-execSync(`cp -R .next/static/* ${deployDir}/_next/static/`, { stdio: 'inherit' })
+execSync(`cp -R .next/static/* ${deployDir}/_next/static/`, {
+  stdio: 'inherit',
+})
 
 // Create a simple index.html file
 const indexHtml = `
@@ -74,7 +76,10 @@ const routesJson = {
   include: ['/*'],
   exclude: [],
 }
-fs.writeFileSync(`${deployDir}/_routes.json`, JSON.stringify(routesJson, null, 2))
+fs.writeFileSync(
+  `${deployDir}/_routes.json`,
+  JSON.stringify(routesJson, null, 2),
+)
 
 console.log('✅ Deployment package created successfully!')
 console.log(`🌐 Deploy the "${deployDir}" directory to Cloudflare Pages`)

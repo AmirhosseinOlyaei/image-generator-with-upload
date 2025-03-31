@@ -29,7 +29,6 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 
 # Next.js
 /.next/
@@ -59,5 +58,7 @@ supabase/config.toml
 *.db
 *.sqlitedb
 
-# Cloudflare Workers
+# Cloudflare
+.cloudflare/deploy/
+.vercel/
 .wrangler/
