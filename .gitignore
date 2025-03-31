@@ -58,3 +58,6 @@ supabase/config.toml
 *.sqlite
 *.db
 *.sqlitedb
+
+# Cloudflare Workers
+.wrangler/
