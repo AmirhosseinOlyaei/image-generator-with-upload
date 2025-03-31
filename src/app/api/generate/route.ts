@@ -78,21 +78,71 @@ async function callOpenAI(
   })
 
   try {
-    // Convert base64 to Buffer for OpenAI SDK
-    const imageBuffer = Buffer.from(base64Image, 'base64')
-
     // eslint-disable-next-line no-console
     console.log('Calling OpenAI API with prompt:', prompt)
 
-    // Create a Blob from the buffer and convert it to a File object
-    const blob = new Blob([imageBuffer], { type: 'image/png' })
-    const file = new File([blob], 'image.png', { type: 'image/png' })
+    // Ensure the base64 string is properly formatted for PNG
+    // Remove any data URL prefix if present
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '')
+    
+    // Convert base64 to Buffer
+    const imageBuffer = Buffer.from(base64Data, 'base64')
+    
+    // Check file size (OpenAI limit is 4MB)
+    const fileSizeInMB = imageBuffer.length / (1024 * 1024)
+    if (fileSizeInMB > 4) {
+      throw new Error(
+        'Image size exceeds 4MB limit. Please use a smaller image.',
+      )
+    }
 
-    const response = await openai.images.edit({
-      image: file,
-      prompt: prompt,
+    // First, use the GPT-4o model to analyze the image
+    const visionResponse = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert at analyzing images and describing them in detail for artistic transformation.',
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Describe this person/image in detail so it can be transformed into Studio Ghibli style. Focus on facial features, hair, clothing, and expression.',
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/png;base64,${base64Data}`,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 500,
+    })
+
+    const imageDescription = visionResponse.choices[0]?.message?.content || 'A person'
+    
+    // Now use DALL-E 3 to generate a Ghibli-style version based on the description
+    const enhancedPrompt = `Create a Studio Ghibli style character based on this exact description: ${imageDescription}. 
+    
+    The character should have:
+    1. The same facial features, expression, and pose as in the original image
+    2. Soft watercolor-like textures with delicate brush strokes typical of Ghibli films
+    3. Gentle color gradients and simplified but expressive features
+    4. The same hairstyle and clothing as the original, but in Ghibli style
+    5. A slightly stylized appearance while maintaining recognizable likeness
+    
+    Original prompt: ${prompt}`
+
+    const response = await openai.images.generate({
+      model: 'dall-e-3',
+      prompt: enhancedPrompt,
       n: 1,
       size: '1024x1024',
+      quality: 'hd',
     })
 
     if (!response.data || response.data.length === 0) {
@@ -266,28 +316,30 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
+    // TEMPORARILY DISABLED AUTH: Skip session check
     // Get session to verify user is authenticated
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    // const {
+    //   data: { session },
+    // } = await supabase.auth.getSession()
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // if (!session) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
 
+    // TEMPORARILY DISABLED AUTH: Skip profile check
     // Get user profile to check free image usage
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
+    // const { data: profile, error: profileError } = await supabase
+    //   .from('profiles')
+    //   .select('*')
+    //   .eq('id', session.user.id)
+    //   .single()
 
-    if (profileError) {
-      return NextResponse.json(
-        { error: 'Failed to get user profile' },
-        { status: 500 },
-      )
-    }
+    // if (profileError) {
+    //   return NextResponse.json(
+    //     { error: 'Failed to get user profile' },
+    //     { status: 500 },
+    //   )
+    // }
 
     const formData = await request.formData()
     const imageFile = formData.get('image') as File
@@ -304,20 +356,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // TEMPORARILY DISABLED AUTH: Skip usage checks
     // Check if user has free image usage available or is subscribed
-    const hasRemainingFreeGenerations =
-      profile.credits > 0 && profile.plan === 'free'
-    const isSubscribed = profile.plan !== 'free'
+    // const hasRemainingFreeGenerations =
+    //   profile.credits > 0 && profile.plan === 'free'
+    // const isSubscribed = profile.plan !== 'free'
 
-    if (!hasRemainingFreeGenerations && !isSubscribed && !customApiKey) {
-      return NextResponse.json(
-        {
-          error:
-            'Free image generations already used. Please provide API key or subscribe.',
-        },
-        { status: 403 },
-      )
-    }
+    // if (!hasRemainingFreeGenerations && !isSubscribed && !customApiKey) {
+    //   return NextResponse.json(
+    //     {
+    //       error:
+    //         'Free image generations already used. Please provide API key or subscribe.',
+    //     },
+    //     { status: 403 },
+    //   )
+    // }
 
     // Call the selected provider's API
     const generatedImageUrl = await callProviderApi(
@@ -327,13 +380,14 @@ export async function POST(request: NextRequest) {
       customApiKey || undefined,
     )
 
+    // TEMPORARILY DISABLED AUTH: Skip updating profile
     // If this was their free image, decrement the counter
-    if (hasRemainingFreeGenerations) {
-      await supabase
-        .from('profiles')
-        .update({ credits: profile.credits - 1 })
-        .eq('id', session.user.id)
-    }
+    // if (hasRemainingFreeGenerations) {
+    //   await supabase
+    //     .from('profiles')
+    //     .update({ credits: profile.credits - 1 })
+    //     .eq('id', session.user.id)
+    // }
 
     return NextResponse.json({
       success: true,
