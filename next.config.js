@@ -20,11 +20,14 @@ const nextConfig = {
         hostname: 'oaidalleapiprodscus.blob.core.windows.net',
       },
     ],
+    unoptimized: true, // Required for Cloudflare Pages
   },
   env: {
     SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
+  // Configure for Cloudflare Pages
+  output: 'export', // Static site generation for Cloudflare Pages
 }
 
 export default nextConfig
