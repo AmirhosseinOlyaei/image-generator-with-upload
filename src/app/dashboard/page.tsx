@@ -89,7 +89,9 @@ export default function Dashboard() {
   const [showProviderKeyModal, setShowProviderKeyModal] = React.useState(false)
   const [showSubscriptionModal, setShowSubscriptionModal] =
     React.useState(false)
-  const [prompt, setPrompt] = React.useState<string>('')
+  const [prompt, setPrompt] = React.useState<string>(
+    'Transform this image into Studio Ghibli style.',
+  )
 
   const handleFileUpload = (file: File | null) => {
     if (file) {
@@ -238,7 +240,8 @@ export default function Dashboard() {
               <Typography variant='h6' gutterBottom>
                 Upload Your Image
               </Typography>
-              <Box sx={{ mb: 3, flex: 1 }}>
+
+              <Box sx={{ mb: 3 }}>
                 <ImageUpload onFileUpload={handleFileUpload} />
               </Box>
 
@@ -267,14 +270,15 @@ export default function Dashboard() {
               </FormControl>
 
               <TextField
-                fullWidth
-                label='Transformation Prompt'
-                placeholder="Describe the Ghibli style you want (e.g., 'Transform into Howl's Moving Castle style')"
+                label='Prompt'
                 multiline
+                fullWidth
                 rows={3}
                 value={prompt}
                 onChange={handlePromptChange}
-                sx={{ mb: 3 }}
+                placeholder={`Add additional details for your Ghibli transformation (optional)`}
+                sx={{ mb: 1 }}
+                helperText='Customize your Ghibli transformation with additional details'
               />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -283,29 +287,50 @@ export default function Dashboard() {
                   color='primary'
                   startIcon={<AutoFixHighRoundedIcon />}
                   onClick={handleGenerateImage}
-                  disabled={generating || !uploadedImage || !prompt}
+                  disabled={!uploadedImage || generating}
+                  sx={{
+                    py: 1.5,
+                    position: 'relative',
+                  }}
                 >
                   {generating ? (
                     <>
                       <CircularProgress
                         size={24}
                         color='inherit'
-                        sx={{ mr: 1 }}
+                        sx={{ position: 'absolute' }}
                       />
-                      Generating...
+                      <span style={{ opacity: 0 }}>Generate Ghibli Image</span>
                     </>
                   ) : (
-                    'Transform Image'
+                    'Generate Ghibli Image'
                   )}
                 </Button>
 
                 <Button
                   variant='outlined'
+                  color='secondary'
                   onClick={() => setShowProviderKeyModal(true)}
+                  sx={{
+                    py: 1.5,
+                    borderWidth: !_providerKeys[selectedProvider] ? 2 : 1,
+                    borderColor: !_providerKeys[selectedProvider]
+                      ? 'warning.main'
+                      : undefined,
+                  }}
                 >
-                  Set API Key
+                  {!_providerKeys[selectedProvider]
+                    ? 'Set API Key (Required)'
+                    : 'Update API Key'}
                 </Button>
               </Box>
+
+              {!_providerKeys[selectedProvider] && (
+                <Alert severity='warning' sx={{ mt: 2 }}>
+                  The default API key has run out of credits. Please set your
+                  own OpenAI API key to continue generating images.
+                </Alert>
+              )}
 
               {error && (
                 <Alert severity='error' sx={{ mt: 2 }}>
@@ -381,7 +406,7 @@ export default function Dashboard() {
                         alt='Uploaded'
                         sx={{
                           maxWidth: '100%',
-                          maxHeight: 200,
+                          maxHeight: '300px',
                           objectFit: 'contain',
                         }}
                       />
@@ -425,7 +450,7 @@ export default function Dashboard() {
                       alt='Generated'
                       sx={{
                         maxWidth: '100%',
-                        maxHeight: 200,
+                        maxHeight: '300px',
                         objectFit: 'contain',
                       }}
                     />
@@ -438,15 +463,23 @@ export default function Dashboard() {
               </Box>
 
               {generatedImageUrl && (
-                <Button
-                  variant='contained'
-                  color='secondary'
-                  startIcon={<SaveAltRoundedIcon />}
-                  onClick={handleSaveImage}
-                  sx={{ alignSelf: 'flex-start' }}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    width: '100%',
+                    mt: 2,
+                  }}
                 >
-                  Save Image
-                </Button>
+                  <Button
+                    variant='contained'
+                    color='secondary'
+                    startIcon={<SaveAltRoundedIcon />}
+                    onClick={handleSaveImage}
+                  >
+                    Save Image
+                  </Button>
+                </Box>
               )}
             </Paper>
           </Grid>

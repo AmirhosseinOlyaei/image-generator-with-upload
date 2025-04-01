@@ -1,111 +1,109 @@
 import { Buffer } from 'buffer'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import axios from 'axios'
 
-// Function for calling different provider APIs
-async function callProviderApi(
-  provider: string,
-  imageFile: File,
-  prompt: string,
-  apiKey?: string,
-) {
-  // Convert image file to base64 for API requests
-  const arrayBuffer = await imageFile.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  const base64Image = buffer.toString('base64')
-
-  // Prepare the prompt for image generation
-  const fullPrompt =
-    `Transform this image into Studio Ghibli style. ${prompt}`.trim()
-
+export async function POST(request: NextRequest) {
   try {
-    switch (provider) {
-      case 'openai':
-        return await callOpenAI(base64Image, fullPrompt, apiKey)
-      case 'stability':
-        if (!apiKey && !process.env.STABILITY_API_KEY) {
-          throw new Error(
-            'Stability AI API key not found. Please provide your own API key.',
-          )
-        }
-        return await callStabilityAI(base64Image, fullPrompt, apiKey)
-      case 'midjourney':
-        if (!apiKey && !process.env.MIDJOURNEY_API_KEY) {
-          throw new Error(
-            'Midjourney API key not found. Please provide your own API key.',
-          )
-        }
-        return await callMidjourney(base64Image, fullPrompt, apiKey)
-      case 'leonardo':
-        if (!apiKey && !process.env.LEONARDO_API_KEY) {
-          throw new Error(
-            'Leonardo AI API key not found. Please provide your own API key.',
-          )
-        }
-        return await callLeonardoAI(base64Image, fullPrompt, apiKey)
-      default:
-        throw new Error('Invalid AI provider')
+    const formData = await request.formData()
+    const image = formData.get('image') as File
+    const prompt = formData.get('prompt') as string
+    const provider = formData.get('provider') as string
+    const userApiKey = formData.get('apiKey') as string | null
+
+    // Validate inputs
+    if (!image) {
+      return NextResponse.json({ error: 'No image provided' }, { status: 400 })
     }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(`Error calling ${provider} API:`, error)
-    throw error
-  }
-}
 
-// OpenAI DALL-E 3 API implementation
-async function callOpenAI(
-  base64Image: string,
-  prompt: string,
-  apiKey?: string,
-) {
-  const key = apiKey || process.env.OPENAI_API_KEY
+    if (!prompt) {
+      return NextResponse.json({ error: 'No prompt provided' }, { status: 400 })
+    }
 
-  if (!key) {
-    throw new Error(
-      'OpenAI API key not found. Please provide your own API key.',
-    )
-  }
-
-  const openai = new OpenAI({
-    apiKey: key,
-  })
-
-  try {
-    // eslint-disable-next-line no-console
-    console.log('Calling OpenAI API with prompt:', prompt)
-
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '')
-
-    const imageBuffer = Buffer.from(base64Data, 'base64')
-
-    const fileSizeInMB = imageBuffer.length / (1024 * 1024)
-    if (fileSizeInMB > 5) {
-      throw new Error(
-        'Image size exceeds 5MB limit. Please use a smaller image.',
+    // Check file size (5MB limit for Vercel)
+    if (image.size > 5 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'Image size exceeds 5MB limit' },
+        { status: 400 },
       )
     }
 
+    // Process based on provider
+    if (provider === 'openai') {
+      // Use user-provided API key if available, otherwise use environment variable
+      const apiKey = userApiKey || process.env.OPENAI_API_KEY
+
+      if (!apiKey) {
+        return NextResponse.json(
+          { error: 'No API key available. Please set your OpenAI API key.' },
+          { status: 401 },
+        )
+      }
+
+      return await callOpenAI(image, prompt, apiKey)
+    } else if (provider === 'stability') {
+      // TODO: Implement Stability AI
+      return NextResponse.json(
+        { error: 'Stability AI not implemented yet' },
+        { status: 501 },
+      )
+    } else if (provider === 'midjourney') {
+      // TODO: Implement Midjourney
+      return NextResponse.json(
+        { error: 'Midjourney not implemented yet' },
+        { status: 501 },
+      )
+    } else if (provider === 'leonardo') {
+      // TODO: Implement Leonardo AI
+      return NextResponse.json(
+        { error: 'Leonardo AI not implemented yet' },
+        { status: 501 },
+      )
+    } else {
+      return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
+    }
+  } catch (error) {
+    // Log error for debugging but don't expose details to client
+    console.error('Error processing image:', error)
+    return NextResponse.json(
+      { error: 'Failed to process image' },
+      { status: 500 },
+    )
+  }
+}
+
+async function callOpenAI(image: File, prompt: string, apiKey: string) {
+  try {
+    // Convert image to base64
+    const bytes = await image.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    const base64Image = buffer.toString('base64')
+    const mimeType = image.type
+
+    // Initialize OpenAI client with the provided API key
+    const openai = new OpenAI({
+      apiKey,
+    })
+
+    // First use GPT-4o to analyze the image and create a detailed description
     const visionResponse = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
           content:
-            'You are an expert at analyzing images and describing them in detail for artistic transformation.',
+            'You are an expert at analyzing images and describing people in detail. Focus on facial features, hair, clothing, and expression. Be specific and detailed.',
         },
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: 'Describe this person/image in detail so it can be transformed into Studio Ghibli style. Focus on facial features, hair, clothing, and expression.',
+              text: 'Describe this person in detail, focusing on their appearance.',
             },
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/png;base64,${base64Data}`,
+                url: `data:${mimeType};base64,${base64Image}`,
               },
             },
           ],
@@ -117,147 +115,43 @@ async function callOpenAI(
     const imageDescription =
       visionResponse.choices[0]?.message?.content || 'A person'
 
-    const enhancedPrompt = `Create a Studio Ghibli style character based on this exact description: ${imageDescription}. 
+    // Now use DALL-E 3 to generate a Ghibli-style version based on the description
+    const enhancedPrompt = `Transform the uploaded selfie or group into a Studio Ghibli-style character. The subject should have expressive, simplified features with slightly larger eyes in the signature Ghibli aesthetic. Render the image in a soft watercolor style with warm, nostalgic lighting. The background should be an enhanced, dreamlike version of the original, incorporating fantastical elements like glowing dust particles. Maintain wooden beams and pendant lights but stylize them with Ghibli’s rich textures. Use soft, rich colors with a painterly effect. The final image should feel contemplative yet warm, capturing the essence of Hayao Miyazaki and Isao Takahata's art. Example of bad generation: This is a very bad user experience to see user's provided image that has for example four people see generated image with five people.
+
+
+    Based on this image description: ${imageDescription}
     
-    The character should have:
-    1. The same facial features, expression, and pose as in the original image
-    2. Soft watercolor-like textures with delicate brush strokes typical of Ghibli films
-    3. Gentle color gradients and simplified but expressive features
-    4. The same hairstyle and clothing as the original, but in Ghibli style
-    5. A slightly stylized appearance while maintaining recognizable likeness
-    
-    Original prompt: ${prompt}`
+    Additional details from user: ${prompt}`
 
     const response = await openai.images.generate({
       model: 'dall-e-3',
       prompt: enhancedPrompt,
       n: 1,
       size: '1024x1024',
-      quality: 'hd',
+      quality: 'standard',
+      style: 'vivid',
     })
 
-    if (!response.data || response.data.length === 0) {
-      throw new Error('OpenAI returned empty response')
+    const imageUrl = response.data[0]?.url
+
+    if (!imageUrl) {
+      throw new Error('No image URL returned from OpenAI')
     }
 
-    // eslint-disable-next-line no-console
-    console.log('OpenAI response received:', response.data[0].url)
-
-    return response.data[0].url
+    return NextResponse.json({ imageUrl })
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('OpenAI API error:', error)
-    throw new Error(
-      `Failed to generate image with OpenAI: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    )
-  }
-}
+    console.error('Error calling OpenAI:', error)
 
-// Stability AI API implementation
-async function callStabilityAI(
-  base64Image: string,
-  prompt: string,
-  apiKey?: string,
-) {
-  const key = apiKey || process.env.STABILITY_API_KEY
-
-  try {
-    const response = await axios.post(
-      'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/image-to-image',
-      {
-        init_image: base64Image,
-        prompt: prompt,
-        cfg_scale: 7,
-        samples: 1,
-        steps: 30,
-        style_preset: 'anime',
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${key}`,
-        },
-      },
-    )
-
-    return response.data.artifacts[0].base64
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Stability AI API error:', error)
-    throw new Error('Failed to generate image with Stability AI')
-  }
-}
-
-// Midjourney API implementation (via third-party API)
-async function callMidjourney(
-  _base64Image: string,
-  _prompt: string,
-  _apiKey?: string,
-) {
-  try {
-    // This is a placeholder for a Midjourney API call
-    // Simulate API call with delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Return a placeholder image URL
-    return 'https://placehold.co/1024x1024/EEE/31343C?text=Midjourney+API+Placeholder'
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Midjourney API error:', error)
-    throw new Error('Failed to generate image with Midjourney')
-  }
-}
-
-// Leonardo AI API implementation
-async function callLeonardoAI(
-  _base64Image: string,
-  _prompt: string,
-  _apiKey?: string,
-) {
-  try {
-    // This is a placeholder for a Leonardo AI API call
-    // Simulate API call with delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Return a placeholder image URL
-    return 'https://placehold.co/1024x1024/EEE/31343C?text=Leonardo+AI+API+Placeholder'
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Leonardo AI API error:', error)
-    throw new Error('Failed to generate image with Leonardo AI')
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const formData = await request.formData()
-
-    // Get the uploaded image file
-    const imageFile = formData.get('image') as File
-    if (!imageFile) {
+    // Return a more specific error message
+    if (error instanceof Error) {
       return NextResponse.json(
-        { error: 'No image file provided' },
-        { status: 400 },
+        { error: `OpenAI API error: ${error.message}` },
+        { status: 500 },
       )
     }
 
-    // Get the prompt and provider from the form data
-    const prompt = (formData.get('prompt') as string) || ''
-    const provider = (formData.get('provider') as string) || 'openai'
-    const apiKey = (formData.get('apiKey') as string) || undefined
-
-    // Call the appropriate provider API
-    const imageUrl = await callProviderApi(provider, imageFile, prompt, apiKey)
-
-    // Return the generated image URL
-    return NextResponse.json({ imageUrl })
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error in API route:', error)
-
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Unknown error occurred with OpenAI API' },
       { status: 500 },
     )
   }
