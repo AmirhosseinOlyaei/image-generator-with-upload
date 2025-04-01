@@ -26,7 +26,7 @@ const nextConfig = {
     SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  output: 'standalone',
   // Optimize bundle size
   webpack: (config, { dev, isServer }) => {
     // Only apply optimizations for production client-side builds

@@ -3,7 +3,7 @@ services:
     name: ghibli-vision
     env: node
     buildCommand: pnpm install && pnpm build
-    startCommand: pnpm start
+    startCommand: node .next/standalone/server.js
     publishDir: .next
     envVars:
       - key: NODE_ENV
@@ -12,4 +12,6 @@ services:
         value: 20.0.0
       - key: PNPM_VERSION
         value: 8.15.3
+      - key: PORT
+        value: 10000
     autoDeploy: true
