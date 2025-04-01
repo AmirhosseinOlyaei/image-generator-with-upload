@@ -20,12 +20,14 @@ app.prepare().then(() => {
       // Let Next.js handle the request
       await handle(req, res, parsedUrl)
     } catch (err) {
+      // Log error and send response
       console.error('Error occurred handling', req.url, err)
       res.statusCode = 500
       res.end('Internal Server Error')
     }
   }).listen(port, err => {
     if (err) throw err
+    // Log server start
     console.log(`> Ready on http://${hostname}:${port}`)
   })
 })
