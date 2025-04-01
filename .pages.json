@@ -1,0 +1,9 @@
+{
+  "buildConfig": {
+    "buildCommand": "bash ./cloudflare-build-deploy.sh",
+    "outputDirectory": ".cloudflare/deploy",
+    "rootDirectory": "/",
+    "nodeVersion": "20"
+  },
+  "deploymentStrategy": "static"
+}

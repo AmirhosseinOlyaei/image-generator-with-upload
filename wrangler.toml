@@ -1,7 +1,10 @@
 name = "ghibli-vision"
 compatibility_date = "2024-03-31"
 
-# Pages configuration
+# Cloudflare Pages configuration
+[site]
+bucket = ".cloudflare/deploy"
+
 [build]
 command = "bash ./cloudflare-build-deploy.sh"
 

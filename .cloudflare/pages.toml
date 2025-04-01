@@ -1,5 +1,5 @@
 # Configuration for Cloudflare Pages
-# This file helps optimize your Next.js application for Cloudflare Pages
+# This file helps optimize your static site for Cloudflare Pages
 
 # Set build output directory
 [build]
