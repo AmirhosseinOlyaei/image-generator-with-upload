@@ -2,11 +2,13 @@ services:
   - type: web
     name: ghibli-vision
     env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
         value: 20.0.0
+      - key: PNPM_VERSION
+        value: 8.15.3
     autoDeploy: true
