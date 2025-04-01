@@ -219,7 +219,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         }
       }
     }
-  }, [dispatch, supabase, state.userPreferences])
+  }, [dispatch, supabase])
 
   // Set up auth state listener
   useEffect(() => {
