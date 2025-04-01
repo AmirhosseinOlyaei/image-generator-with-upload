@@ -349,11 +349,18 @@ export async function POST(request: NextRequest) {
       (formData.get('prompt') as string) ||
       'Transform this image into Studio Ghibli style'
     const provider = formData.get('provider') as string
-    const customApiKey = formData.get('apiKey') as string | null
+    const apiKey = (formData.get('apiKey') as string) || ''
 
     if (!imageFile || !provider) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 },
+      )
+    }
+
+    if (provider === 'openai' && !apiKey && !process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'API key is required for OpenAI' },
         { status: 400 },
       )
     }
@@ -364,7 +371,7 @@ export async function POST(request: NextRequest) {
     //   profile.credits > 0 && profile.plan === 'free'
     // const isSubscribed = profile.plan !== 'free'
 
-    // if (!hasRemainingFreeGenerations && !isSubscribed && !customApiKey) {
+    // if (!hasRemainingFreeGenerations && !isSubscribed && !apiKey) {
     //   return NextResponse.json(
     //     {
     //       error:
@@ -379,7 +386,7 @@ export async function POST(request: NextRequest) {
       provider,
       imageFile,
       prompt,
-      customApiKey || undefined,
+      apiKey,
     )
 
     // TEMPORARILY DISABLED AUTH: Skip updating profile

@@ -9,6 +9,7 @@ import { useApp } from '@/contexts/AppContext'
 import { UserProfile } from '@/lib/supabase'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
+import KeyIcon from '@mui/icons-material/Key'
 import {
   Alert,
   Box,
@@ -26,7 +27,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // AI providers
 const aiProviders = [
@@ -60,15 +61,21 @@ const aiProviders = [
 
 export default function Dashboard() {
   const _router = useRouter()
-  const { user: _contextUser, isAuthLoading: _isAuthLoading } = useApp()
+  const {
+    user: _contextUser,
+    isAuthLoading: _isAuthLoading,
+    getProviderKey,
+    setProviderKey: _setProviderKey,
+    removeProviderKey: _removeProviderKey,
+  } = useApp()
 
   // TEMPORARILY DISABLED AUTH: Set defaults without requiring authentication
   const [_user, _setUser] = useState<UserProfile | null>(null)
-  const [profile, _setProfile] = useState<UserProfile | null>(null)
-  const [_loading, _setLoading] = useState(false) // Changed to false to skip loading state
-  const [generating, setGenerating] = useState(false)
+  const [_profile, _setProfile] = useState<UserProfile | null>(null)
+  const [_loading, _setLoading] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+  const [generating, setGenerating] = useState(false)
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
     null,
   )
@@ -93,31 +100,41 @@ export default function Dashboard() {
     }
   }
 
-  const handleProviderChange = (event: SelectChangeEvent<string>) => {
+  // Handle provider change
+  const handleProviderChange = (event: SelectChangeEvent) => {
     const newProvider = event.target.value
+
     // Only allow changing to enabled providers
     const provider = aiProviders.find(p => p.id === newProvider)
     if (provider && !provider.disabled) {
       setSelectedProvider(newProvider)
+
+      // Check if the user has a key for this provider
+      if (!providerKeys[newProvider]) {
+        // If no key is available for this provider, show the modal
+        setShowProviderKeyModal(true)
+      }
     }
   }
 
-  const handleCustomApiKeySubmit = async (providerKey: string) => {
-    setProviderKeys({ ...providerKeys, [selectedProvider]: providerKey })
-    setShowProviderKeyModal(false)
+  // Handle provider key submission
+  const handleProviderKeySubmit = (apiKey: string) => {
+    const setProviderKey = _setProviderKey
 
-    // TEMPORARILY DISABLED AUTH: Comment out profile update
-    // // Update the user's custom API key in the database
-    // if (user) {
-    //   const { error } = await supabase
-    //     .from('profiles')
-    //     .update({ custom_api_key: providerKey })
-    //     .eq('id', user.id)
+    if (setProviderKey) {
+      setProviderKey(
+        selectedProvider as 'openai' | 'stability' | 'midjourney' | 'leonardo',
+        apiKey,
+      )
 
-    //   if (error) {
-    //     setError('Failed to save your API key. Please try again.')
-    //   }
-    // }
+      setProviderKeys({
+        ...providerKeys,
+        [selectedProvider]: apiKey,
+      })
+
+      setShowProviderKeyModal(false)
+      setError(null)
+    }
   }
 
   const handleGenerateImage = async () => {
@@ -126,12 +143,18 @@ export default function Dashboard() {
       return
     }
 
+    // Check if API key is required and not provided
+    if (!providerKeys[selectedProvider]) {
+      setError('No API key available. Please set your API key to continue.')
+      setShowProviderKeyModal(true)
+      return
+    }
+
     setGenerating(true)
     setGeneratedImageUrl(null)
     setError(null)
 
     try {
-      // Create a FormData object to send the image
       const formData = new FormData()
       formData.append('image', uploadedImage)
       formData.append('provider', selectedProvider)
@@ -141,7 +164,7 @@ export default function Dashboard() {
       )
 
       // Add API key if available
-      if (providerKeys && providerKeys[selectedProvider]) {
+      if (providerKeys[selectedProvider]) {
         formData.append('apiKey', providerKeys[selectedProvider])
       }
 
@@ -151,43 +174,23 @@ export default function Dashboard() {
       })
 
       if (!response.ok) {
-        try {
-          // Try to parse as JSON first
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to generate image')
-        } catch (jsonError) {
-          // If JSON parsing fails, it's likely an HTML response (like "Request Entity Too Large")
-          // Get the response again since we already consumed it
-          const textResponse = await fetch('/api/generate', {
-            method: 'POST',
-            body: formData,
-          })
-          const errorText = await textResponse.text()
+        const errorMessage = 'Failed to generate image'
 
-          if (errorText.includes('Request Entity Too Large')) {
-            throw new Error(
-              'Image file is too large. Please use a smaller image (under 5MB).',
-            )
-          } else if (
-            response.status === 504 ||
-            errorText.includes('504') ||
-            errorText.includes('Gateway Timeout')
-          ) {
-            throw new Error(
-              'Server timeout error. Vercel free tier has a 10-second function limit which is often not enough for AI image generation. Try using a simpler image or consider upgrading to a paid plan for longer execution times.',
-            )
-          } else {
-            // Log the error for debugging
-            // eslint-disable-next-line no-console
-            console.error('Server error details:', {
-              status: response.status,
-              statusText: response.statusText,
-              errorTextSample: errorText.substring(0, 500), // First 500 chars for debugging
-            })
-            throw new Error(
-              `Server error: ${response.status}. Please try a smaller image or a different format.`,
-            )
-          }
+        const textResponse = await fetch('/api/generate', {
+          method: 'POST',
+          body: formData,
+        })
+        const errorText = await textResponse.text()
+
+        if (errorText.includes('exceeds') || errorText.includes('limit')) {
+          throw new Error(
+            'Image file is too large. Please use a smaller image (under 5MB).',
+          )
+        } else {
+          // Log the error for debugging
+          // eslint-disable-next-line no-console
+          console.error('API error text:', errorText)
+          throw new Error(errorText || errorMessage)
         }
       }
 
@@ -233,10 +236,26 @@ export default function Dashboard() {
 
   const handleShowOptions = () => {
     // Determine which modal to show
-    if (profile && (profile.credits ?? 0) > 0 && profile.plan === 'free') {
+    if (_profile && (_profile.credits ?? 0) > 0 && _profile.plan === 'free') {
       setShowProviderKeyModal(true)
     }
   }
+
+  // Load provider keys from context
+  useEffect(() => {
+    if (getProviderKey) {
+      const keys: Record<string, string> = {}
+      const openaiKey = getProviderKey('openai')
+      if (openaiKey) {
+        keys['openai'] = openaiKey
+      }
+      const stabilityKey = getProviderKey('stability')
+      if (stabilityKey) {
+        keys['stability'] = stabilityKey
+      }
+      setProviderKeys(keys)
+    }
+  }, [getProviderKey])
 
   // TEMPORARILY DISABLED AUTH: Remove loading check
   // if (loading) {
@@ -269,9 +288,9 @@ export default function Dashboard() {
             severity='error'
             sx={{ mb: 3 }}
             action={
-              profile &&
-              (profile.credits ?? 0) > 0 &&
-              profile.plan === 'free' ? (
+              _profile &&
+              (_profile.credits ?? 0) > 0 &&
+              _profile.plan === 'free' ? (
                 <Button
                   color='inherit'
                   size='small'
@@ -291,6 +310,14 @@ export default function Dashboard() {
           Authentication is temporarily disabled. You can generate images
           without logging in.
         </Alert>
+
+        {!providerKeys[selectedProvider] && (
+          <Alert severity='warning' sx={{ mb: 3 }}>
+            The default API key has run out of credits. Please set your own{' '}
+            {aiProviders.find(p => p.id === selectedProvider)?.name || 'API'}{' '}
+            key to continue generating images.
+          </Alert>
+        )}
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={7}>
@@ -315,12 +342,30 @@ export default function Dashboard() {
                     onChange={handleProviderChange}
                   >
                     {aiProviders.map(provider => (
-                      <MenuItem key={provider.id} value={provider.id}>
+                      <MenuItem
+                        key={provider.id}
+                        value={provider.id}
+                        disabled={provider.disabled}
+                      >
                         {provider.name}
+                        {provider.disabled && ' (Coming Soon)'}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
+
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  onClick={() => setShowProviderKeyModal(true)}
+                  startIcon={<KeyIcon />}
+                >
+                  {providerKeys[selectedProvider] 
+                    ? "Update API Key" 
+                    : "Set API Key"}
+                </Button>
 
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel id='prompt-label'>
@@ -447,7 +492,7 @@ export default function Dashboard() {
       <ProviderKeyModal
         open={showProviderKeyModal}
         onClose={() => setShowProviderKeyModal(false)}
-        onSubmit={handleCustomApiKeySubmit}
+        onSubmit={handleProviderKeySubmit}
         aiProvider={
           aiProviders.find(p => p.id === selectedProvider) || aiProviders[0]
         }
