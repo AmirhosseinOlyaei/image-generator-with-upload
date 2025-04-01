@@ -8,6 +8,10 @@ echo "🚀 Starting Cloudflare Pages build process..."
 mkdir -p .cloudflare/deploy
 echo "📁 Created .cloudflare/deploy directory"
 
+# Create dashboard directory
+mkdir -p .cloudflare/deploy/dashboard
+echo "📁 Created dashboard directory"
+
 # Copy public assets
 if [ -d "public" ]; then
   cp -r public/* .cloudflare/deploy/
@@ -326,10 +330,6 @@ cat > .cloudflare/deploy/dashboard/index.html << 'EOL'
 </body>
 </html>
 EOL
-
-# Create directory for dashboard
-mkdir -p .cloudflare/deploy/dashboard
-echo "📝 Created HTML files"
 
 # Create routes.json for Cloudflare Pages
 cat > .cloudflare/deploy/_routes.json << 'EOL'
