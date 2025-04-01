@@ -173,17 +173,32 @@ export default function Dashboard() {
 
   const handleSaveImage = () => {
     if (generatedImageUrl) {
-      const link = document.createElement('a')
-      link.href = generatedImageUrl
-      link.download = 'ghibli-transformed-image.jpg'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      try {
+        setError(null)
 
-      addNotification({
-        message: 'Image saved successfully!',
-        type: 'success',
-      })
+        // Create a download link that points to our proxy API
+        const proxyUrl = `/api/download?url=${encodeURIComponent(generatedImageUrl)}`
+
+        // Create and trigger download
+        const link = document.createElement('a')
+        link.href = proxyUrl
+        link.download = `ghibli-transformation-${new Date().getTime()}.png`
+        document.body.appendChild(link)
+        link.click()
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link)
+        }, 100)
+        addNotification({
+          message: 'Image saved successfully!',
+          type: 'success',
+        })
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Download error:', error)
+        setError('Failed to download image. Please try again.')
+      }
     }
   }
 
