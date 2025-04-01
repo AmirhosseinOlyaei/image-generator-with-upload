@@ -3,8 +3,8 @@ services:
     name: ghibli-vision
     env: node
     buildCommand: pnpm install && pnpm build
-    startCommand: node .next/standalone/server.js
-    publishDir: .next/standalone
+    startCommand: node server.js
+    publishDir: .next
     envVars:
       - key: NODE_ENV
         value: production

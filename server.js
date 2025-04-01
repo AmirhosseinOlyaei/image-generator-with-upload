@@ -4,8 +4,8 @@ import { parse } from 'url'
 import next from 'next'
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
-const port = process.env.PORT || 3000
+const hostname = process.env.HOSTNAME || 'localhost'
+const port = parseInt(process.env.PORT || '3000', 10)
 
 // Create the Next.js app
 const app = next({ dev, hostname, port })
@@ -25,7 +25,7 @@ app.prepare().then(() => {
       res.statusCode = 500
       res.end('Internal Server Error')
     }
-  }).listen(port, err => {
+  }).listen(port, '0.0.0.0', err => {
     if (err) throw err
     // Log server start
     console.log(`> Ready on http://${hostname}:${port}`)
