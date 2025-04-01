@@ -1,0 +1,6 @@
+{
+  "build": {
+    "command": "bash ./cloudflare-build-deploy.sh",
+    "output_directory": ".cloudflare/deploy"
+  }
+}
