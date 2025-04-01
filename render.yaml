@@ -4,7 +4,7 @@ services:
     env: node
     buildCommand: pnpm install && pnpm build
     startCommand: node .next/standalone/server.js
-    publishDir: .next
+    publishDir: .next/standalone
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,4 +14,6 @@ services:
         value: 8.15.3
       - key: PORT
         value: 10000
+      - key: HOSTNAME
+        value: 0.0.0.0
     autoDeploy: true
