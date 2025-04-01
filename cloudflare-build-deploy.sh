@@ -341,5 +341,10 @@ cat > .cloudflare/deploy/_routes.json << 'EOL'
 EOL
 echo "🌐 Created _routes.json for Cloudflare Pages"
 
+# Also create .next directory and copy files there for Cloudflare compatibility
+mkdir -p .next
+cp -r .cloudflare/deploy/* .next/
+echo "📁 Created .next directory as a fallback for Cloudflare"
+
 echo "✅ Static site created successfully!"
 echo "🌐 Deploy the '.cloudflare/deploy' directory to Cloudflare Pages"

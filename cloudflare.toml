@@ -1,0 +1,9 @@
+[build]
+command = "bash ./cloudflare-build-deploy.sh"
+output_directory = ".cloudflare/deploy"
+
+[site]
+bucket = ".cloudflare/deploy"
+
+[build.environment]
+NODE_VERSION = "20"
