@@ -1,139 +1,157 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Ghibli Vision</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f0f8ff;
-      color: #333;
-    }
-    header {
-      background-color: #4a86e8;
-      color: white;
-      padding: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-left: 1rem;
-    }
-    main {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 1rem;
-    }
-    .generator-container {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: bold;
-    }
-    textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      min-height: 100px;
-      font-family: inherit;
-    }
-    .file-input {
-      margin-top: 1rem;
-    }
-    button {
-      background-color: #4a86e8;
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 4px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #3a76d8;
-    }
-    .result-container {
-      margin-top: 2rem;
-      text-align: center;
-    }
-    .result-image {
-      max-width: 100%;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background-color: #f5f5f5;
-      margin-top: 2rem;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="logo">Ghibli Vision</div>
-    <nav>
-      <a href="/">Home</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Ghibli Vision</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f8ff;
+        color: #333;
+      }
+      header {
+        background-color: #4a86e8;
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+      nav a {
+        color: white;
+        text-decoration: none;
+        margin-left: 1rem;
+      }
+      main {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 1rem;
+      }
+      .generator-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+      }
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+      }
+      textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        min-height: 100px;
+        font-family: inherit;
+      }
+      .file-input {
+        margin-top: 1rem;
+      }
+      button {
+        background-color: #4a86e8;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #3a76d8;
+      }
+      .result-container {
+        margin-top: 2rem;
+        text-align: center;
+      }
+      .result-image {
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      footer {
+        text-align: center;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        margin-top: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">Ghibli Vision</div>
+      <nav>
+        <a href="/">Home</a>
+      </nav>
+    </header>
 
-  <main>
-    <h1>Image Generator</h1>
-    
-    <div class="generator-container">
-      <div class="form-group">
-        <label for="prompt">Describe your image:</label>
-        <textarea id="prompt" placeholder="A peaceful landscape with rolling hills, a small cottage, and a flowing river in the style of Studio Ghibli..."></textarea>
-      </div>
-      
-      <div class="form-group">
-        <label>Reference Image (Optional):</label>
-        <input type="file" class="file-input" accept="image/*">
-      </div>
-      
-      <button id="generate-btn">Generate Image</button>
-      
-      <div class="result-container">
-        <h2>Your Generated Image</h2>
-        <img src="/placeholder-image.jpg" alt="Generated image will appear here" class="result-image">
-        <p>This is a static demo. In the full version, your generated image would appear here.</p>
-        <button id="download-btn">Download Image</button>
-      </div>
-    </div>
-  </main>
+    <main>
+      <h1>Image Generator</h1>
 
-  <footer>
-    <p>&copy; 2025 Ghibli Vision. All rights reserved.</p>
-  </footer>
+      <div class="generator-container">
+        <div class="form-group">
+          <label for="prompt">Describe your image:</label>
+          <textarea
+            id="prompt"
+            placeholder="A peaceful landscape with rolling hills, a small cottage, and a flowing river in the style of Studio Ghibli..."
+          ></textarea>
+        </div>
 
-  <script>
-    // Simple demo functionality
-    document.getElementById('generate-btn').addEventListener('click', function() {
-      alert('In this static demo, image generation is simulated. The full version would generate a unique image based on your prompt.');
-    });
-    
-    document.getElementById('download-btn').addEventListener('click', function() {
-      alert('In the full version, this would download your generated image.');
-    });
-  </script>
-</body>
+        <div class="form-group">
+          <label>Reference Image (Optional):</label>
+          <input type="file" class="file-input" accept="image/*" />
+        </div>
+
+        <button id="generate-btn">Generate Image</button>
+
+        <div class="result-container">
+          <h2>Your Generated Image</h2>
+          <img
+            src="/placeholder-image.jpg"
+            alt="Generated image will appear here"
+            class="result-image"
+          />
+          <p>
+            This is a static demo. In the full version, your generated image
+            would appear here.
+          </p>
+          <button id="download-btn">Download Image</button>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Ghibli Vision. All rights reserved.</p>
+    </footer>
+
+    <script>
+      // Simple demo functionality
+      document
+        .getElementById('generate-btn')
+        .addEventListener('click', function () {
+          alert(
+            'In this static demo, image generation is simulated. The full version would generate a unique image based on your prompt.',
+          )
+        })
+
+      document
+        .getElementById('download-btn')
+        .addEventListener('click', function () {
+          alert(
+            'In the full version, this would download your generated image.',
+          )
+        })
+    </script>
+  </body>
 </html>

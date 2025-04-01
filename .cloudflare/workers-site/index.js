@@ -12,7 +12,7 @@ async function handleEvent(event) {
     let pathname = new URL(event.request.url).pathname
     return new Response(`"${pathname}" not found`, {
       status: 404,
-      statusText: 'not found'
+      statusText: 'not found',
     })
   }
 }
