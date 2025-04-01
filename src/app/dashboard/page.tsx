@@ -128,7 +128,8 @@ export default function Dashboard() {
     setGenerating(true)
 
     try {
-      // For static site, simulate image generation with a placeholder
+      // For local development, always use the placeholder image
+      // This avoids API calls that might fail
       setTimeout(() => {
         setGeneratedImageUrl('/placeholder-ghibli.jpg')
         setGenerating(false)
