@@ -132,17 +132,6 @@ export default function ImageGenerator({
       setGenerating(true)
       setError(null)
 
-      // Check if user needs to use a custom API key
-      if (
-        freeGenerationsLeft <= 0 &&
-        subscriptionTier === 'free' &&
-        !hasProviderKey
-      ) {
-        throw new Error(
-          `You've used all your free generations. Please subscribe or enter a custom ${provider} API key in your profile.`,
-        )
-      }
-
       // Get the provider key if available
       const apiKey = getProviderKey(provider)
 

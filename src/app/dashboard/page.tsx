@@ -322,23 +322,6 @@ export default function Dashboard() {
                   </Select>
                 </FormControl>
 
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel id='prompt-label'>
-                    Custom Prompt (Optional)
-                  </InputLabel>
-                  <TextField
-                    id='prompt'
-                    label='Custom Prompt'
-                    placeholder='Add details to your Ghibli transformation'
-                    value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={2}
-                    variant='outlined'
-                  />
-                </FormControl>
-
                 <Button
                   variant='contained'
                   color='primary'
