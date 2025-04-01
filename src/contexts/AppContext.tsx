@@ -129,7 +129,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [state, dispatch] = useReducer(appReducer, initialState)
   const isMounted = useRef(false)
+  const isInitialized = useRef(false)
 
+  // Set up mounted flag
   useEffect(() => {
     isMounted.current = true
     return () => {
@@ -137,18 +139,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Load preferences from localStorage
+  // One-time initialization to load data from localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isInitialized.current) {
+      isInitialized.current = true
+
       // Load dark mode preference
       const savedDarkMode = localStorage.getItem('darkMode')
       if (savedDarkMode) {
         dispatch({
-          type: 'UPDATE_STATE',
-          userPreferences: {
-            ...state.userPreferences,
-            darkMode: savedDarkMode === 'true',
-          },
+          type: 'TOGGLE_DARK_MODE',
         })
       }
 
@@ -159,10 +159,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const preferences = JSON.parse(savedPreferences)
           dispatch({
             type: 'UPDATE_STATE',
-            userPreferences: {
-              ...state.userPreferences,
-              ...preferences,
-            },
+            userPreferences: preferences,
           })
         } catch (e) {
           // Ignore parsing errors
@@ -183,19 +180,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-  }, [state.userPreferences, dispatch])
+  }, [dispatch])
 
   // Save preferences to localStorage when they change
+  const prevState = useRef(state)
   useEffect(() => {
-    if (typeof window !== 'undefined' && isMounted.current) {
-      localStorage.setItem('darkMode', state.darkMode.toString())
-      localStorage.setItem(
-        'userPreferences',
-        JSON.stringify(state.userPreferences),
-      )
-      localStorage.setItem('providerKeys', JSON.stringify(state.providerKeys))
+    // Skip the first render and only save when state actually changes
+    if (
+      typeof window !== 'undefined' &&
+      isMounted.current &&
+      prevState.current !== state
+    ) {
+      prevState.current = state
+
+      // Only save if we've already initialized (loaded from localStorage)
+      if (isInitialized.current) {
+        localStorage.setItem('darkMode', String(state.darkMode))
+        localStorage.setItem(
+          'userPreferences',
+          JSON.stringify(state.userPreferences),
+        )
+        localStorage.setItem('providerKeys', JSON.stringify(state.providerKeys))
+      }
     }
-  }, [state.darkMode, state.userPreferences, state.providerKeys, isMounted])
+  }, [state, isInitialized, isMounted])
 
   // Toggle dark mode
   const toggleDarkMode = () => {
