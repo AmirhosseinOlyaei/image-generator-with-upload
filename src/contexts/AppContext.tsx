@@ -64,6 +64,7 @@ type AppAction =
 interface AppContextType {
   darkMode: boolean
   notifications: Notification[]
+  providerKeys: ProviderKeys
   toggleDarkMode: () => void
   addNotification: (notification: Omit<Notification, 'id'>) => void
   removeNotification: (id: string) => void
@@ -280,6 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const contextValue: AppContextType = {
     darkMode: state.darkMode,
     notifications: state.notifications,
+    providerKeys: state.providerKeys,
     toggleDarkMode,
     addNotification,
     removeNotification,
