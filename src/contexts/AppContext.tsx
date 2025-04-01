@@ -129,6 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [state, dispatch] = useReducer(appReducer, initialState)
   const isMounted = useRef(false)
+  const initialized = useRef(false)
 
   useEffect(() => {
     isMounted.current = true
@@ -139,14 +140,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Load preferences from localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialized.current) {
       // Load dark mode preference
       const savedDarkMode = localStorage.getItem('darkMode')
       if (savedDarkMode) {
         dispatch({
           type: 'UPDATE_STATE',
           userPreferences: {
-            ...state.userPreferences,
             darkMode: savedDarkMode === 'true',
           },
         })
@@ -159,10 +159,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const preferences = JSON.parse(savedPreferences)
           dispatch({
             type: 'UPDATE_STATE',
-            userPreferences: {
-              ...state.userPreferences,
-              ...preferences,
-            },
+            userPreferences: preferences,
           })
         } catch (e) {
           // Ignore parsing errors
@@ -182,8 +179,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           // Ignore parsing errors
         }
       }
+      initialized.current = true
     }
-  }, [state.userPreferences, dispatch])
+  }, []) // Only run once on mount
 
   // Save preferences to localStorage when they change
   useEffect(() => {

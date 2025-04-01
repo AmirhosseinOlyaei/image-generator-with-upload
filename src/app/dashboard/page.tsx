@@ -128,17 +128,35 @@ export default function Dashboard() {
     setGenerating(true)
 
     try {
-      // For local development, always use the placeholder image
-      // This avoids API calls that might fail
-      setTimeout(() => {
-        setGeneratedImageUrl('/placeholder-ghibli.jpg')
-        setGenerating(false)
+      // Create FormData to send to the API
+      const formData = new FormData()
+      formData.append('image', uploadedImage)
+      formData.append('prompt', prompt)
+      formData.append('provider', selectedProvider)
 
-        addNotification({
-          message: 'Image generated successfully!',
-          type: 'success',
-        })
-      }, 2000)
+      // Add API key if available
+      const providerKey = _providerKeys[selectedProvider]
+      if (providerKey) {
+        formData.append('apiKey', providerKey)
+      }
+
+      // Call the API endpoint
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate image')
+      }
+
+      const data = await response.json()
+      setGeneratedImageUrl(data.imageUrl)
+      addNotification({
+        message: 'Image generated successfully!',
+        type: 'success',
+      })
     } catch (error: unknown) {
       // Using 'unknown' type for error
       if (error instanceof Error) {
@@ -146,6 +164,7 @@ export default function Dashboard() {
       } else {
         setError('Failed to generate image. Please try again.')
       }
+    } finally {
       setGenerating(false)
     }
   }
@@ -334,7 +353,7 @@ export default function Dashboard() {
               <Box
                 sx={{
                   display: 'flex',
-                  flexDirection: { xs: 'column', sm: 'row' },
+                  flexDirection: { xs: 'column', md: 'column' },
                   gap: 2,
                   mb: 2,
                   flex: 1,
@@ -346,6 +365,7 @@ export default function Dashboard() {
                     border: '1px dashed #ccc',
                     borderRadius: 1,
                     display: 'flex',
+                    flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
                     p: 1,
@@ -354,16 +374,27 @@ export default function Dashboard() {
                   }}
                 >
                   {uploadedImageUrl ? (
-                    <Box
-                      component='img'
-                      src={uploadedImageUrl}
-                      alt='Uploaded'
-                      sx={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain',
-                      }}
-                    />
+                    <>
+                      <Box
+                        component='img'
+                        src={uploadedImageUrl}
+                        alt='Uploaded'
+                        sx={{
+                          maxWidth: '100%',
+                          maxHeight: 200,
+                          objectFit: 'contain',
+                        }}
+                      />
+                      <Button
+                        variant='outlined'
+                        color='error'
+                        size='small'
+                        onClick={() => handleFileUpload(null)}
+                        sx={{ mt: 1 }}
+                      >
+                        Remove Image
+                      </Button>
+                    </>
                   ) : (
                     <Typography color='text.secondary'>
                       Original Image
@@ -377,6 +408,7 @@ export default function Dashboard() {
                     border: '1px dashed #ccc',
                     borderRadius: 1,
                     display: 'flex',
+                    flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
                     p: 1,
@@ -393,7 +425,7 @@ export default function Dashboard() {
                       alt='Generated'
                       sx={{
                         maxWidth: '100%',
-                        maxHeight: '100%',
+                        maxHeight: 200,
                         objectFit: 'contain',
                       }}
                     />
