@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bash ./cloudflare-build-deploy.sh",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -14,6 +14,7 @@
     "format:check": "prettier --check .",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
+    "next:build": "next build",
     "cloudflare:build": "bash ./cloudflare-build-deploy.sh",
     "cloudflare:deploy": "pnpm cloudflare:build && wrangler pages deploy .cloudflare/deploy"
   },

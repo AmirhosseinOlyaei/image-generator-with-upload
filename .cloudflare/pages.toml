@@ -3,7 +3,7 @@
 
 # Set build output directory
 [build]
-command = "npm run cloudflare:build"
+command = "bash ./cloudflare-build-deploy.sh"
 output_directory = ".cloudflare/deploy"
 
 # Configure compatibility date
@@ -12,9 +12,6 @@ compatibility_date = "2024-03-31"
 # Specify Node.js version
 [build.environment]
 NODE_VERSION = "20"
-
-# Configure compatibility flags
-compatibility_flags = ["nodejs_compat"]
 
 # Configure routes for SPA
 [routes]
