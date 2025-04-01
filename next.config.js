@@ -20,13 +20,12 @@ const nextConfig = {
         hostname: 'oaidalleapiprodscus.blob.core.windows.net',
       },
     ],
-    unoptimized: true, // Required for Cloudflare Pages
+    unoptimized: process.env.NODE_ENV === 'production',
   },
   env: {
     SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  // Configure for Cloudflare Pages with server-side rendering
   output: 'standalone',
   // Optimize bundle size
   webpack: (config, { dev, isServer }) => {
