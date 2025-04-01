@@ -1,10 +1,11 @@
 'use client'
 
+import CloseIcon from '@mui/icons-material/Close'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import {
   Box,
   Button,
   Card,
-  CardActions,
   CardContent,
   Dialog,
   DialogContent,
@@ -17,10 +18,20 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  useTheme,
 } from '@mui/material'
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
-import CloseIcon from '@mui/icons-material/Close'
-import React from 'react'
+import React, { useState } from 'react'
+
+// Define subscription plan types
+interface SubscriptionPlan {
+  id: string
+  name: string
+  price: number
+  features: string[]
+  credits: number
+  description: string
+  popular?: boolean
+}
 
 interface SubscriptionModalProps {
   open: boolean
@@ -28,201 +39,247 @@ interface SubscriptionModalProps {
   currentPlan: string
 }
 
-// Subscription plan data
-const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: '$0',
-    description: 'Basic access to Ghibli transformations',
-    features: [
-      '10 transformations per month',
-      'Standard quality images',
-      'OpenAI DALL-E 3 support',
-      'Email support',
-    ],
-    buttonText: 'Current Plan',
-    recommended: false,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '$9.99',
-    period: 'month',
-    description: 'For enthusiasts who want more transformations',
-    features: [
-      '100 transformations per month',
-      'High quality images',
-      'All AI providers support',
-      'Priority email support',
-      'No watermarks',
-    ],
-    buttonText: 'Upgrade to Pro',
-    recommended: true,
-  },
-  {
-    id: 'unlimited',
-    name: 'Unlimited',
-    price: '$19.99',
-    period: 'month',
-    description: 'For professionals with unlimited needs',
-    features: [
-      'Unlimited transformations',
-      'Highest quality images',
-      'All AI providers support',
-      'Priority email & chat support',
-      'No watermarks',
-      'API access',
-      'Commercial usage rights',
-    ],
-    buttonText: 'Upgrade to Unlimited',
-    recommended: false,
-  },
-]
-
 export default function SubscriptionModal({
   open,
   onClose,
-  currentPlan: _currentPlan, // Rename to _currentPlan to indicate it's unused
+  currentPlan,
 }: SubscriptionModalProps) {
+  const theme = useTheme()
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  // Mock subscription plans
+  const subscriptionPlans: SubscriptionPlan[] = [
+    {
+      id: 'free',
+      name: 'Free',
+      price: 0,
+      credits: 5,
+      description: 'Basic access with limited features',
+      features: [
+        '5 AI image generations per month',
+        'Standard quality images',
+        'Basic prompt assistance',
+        'Community support',
+      ],
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      price: 9.99,
+      credits: 50,
+      description: 'Enhanced features for creative professionals',
+      features: [
+        '50 AI image generations per month',
+        'High quality images',
+        'Advanced prompt assistance',
+        'Priority support',
+        'Commercial usage rights',
+      ],
+      popular: true,
+    },
+    {
+      id: 'unlimited',
+      name: 'Unlimited',
+      price: 29.99,
+      credits: 1000,
+      description: 'Unlimited access for power users',
+      features: [
+        'Unlimited AI image generations',
+        'Maximum quality images',
+        'Premium prompt assistance',
+        'Dedicated support',
+        'Commercial usage rights',
+        'Early access to new features',
+      ],
+    },
+  ]
+
   const handleSubscribe = (planId: string) => {
     // In a static site, we'll just show a notification
     // eslint-disable-next-line no-console
-    console.log(`Subscribing to ${planId} plan`)
-    onClose()
+    console.log(`Subscribing to ${planId} plan (demo only)`)
+    setSelectedPlan(planId)
+    setLoading(true)
+
+    // Close the modal after a short delay to simulate processing
+    setTimeout(() => {
+      setLoading(false)
+      onClose()
+    }, 1500)
   }
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth={'lg'}
-      fullWidth
-      scroll={'paper'}
-      aria-labelledby={'subscription-dialog-title'}
+      maxWidth='lg'
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          backgroundColor: 'paper',
+          overflow: 'hidden',
+        },
+      }}
+      aria-labelledby='subscription-dialog-title'
     >
-      <DialogTitle id={'subscription-dialog-title'} sx={{ pr: 6 }}>
-        Subscription Plans
+      <DialogTitle id='subscription-dialog-title' sx={{ p: 3 }}>
         <IconButton
-          aria-label={'close'}
+          aria-label='close'
           onClick={onClose}
           sx={{
             position: 'absolute',
-            right: 8,
-            top: 8,
+            right: 12,
+            top: 12,
             color: theme => theme.palette.grey[500],
           }}
         >
           <CloseIcon />
         </IconButton>
+        <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
+          Choose Your Subscription Plan
+        </Typography>
+        <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+          Select the plan that best fits your creative needs
+        </Typography>
       </DialogTitle>
-      <DialogContent dividers>
-        <Typography variant={'h6'} gutterBottom>
-          Choose the plan that works for you
-        </Typography>
-        <Typography variant={'body2'} color={'text.secondary'} paragraph>
-          All plans include access to our Ghibli transformation technology.
-          Upgrade for more transformations and features.
-        </Typography>
-
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          {plans.map(plan => (
+      <DialogContent sx={{ px: 3, pb: 4 }}>
+        <Grid container spacing={3}>
+          {subscriptionPlans.map(plan => (
             <Grid item xs={12} md={4} key={plan.id}>
               <Card
-                variant={'outlined'}
+                variant='outlined'
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   position: 'relative',
-                  ...(plan.recommended && {
+                  transition: 'all 0.3s ease',
+                  border: selectedPlan === plan.id ? 2 : 1,
+                  borderColor:
+                    selectedPlan === plan.id ? 'primary.main' : 'divider',
+                  boxShadow:
+                    selectedPlan === plan.id
+                      ? '0 4px 12px rgba(0,0,0,0.1)'
+                      : 'none',
+                  ...(plan.popular && {
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                     borderColor: 'primary.main',
-                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                    borderWidth: 2,
                   }),
                 }}
               >
-                {plan.recommended && (
+                {plan.popular && (
                   <Box
                     sx={{
                       position: 'absolute',
-                      top: 10,
-                      right: 10,
+                      top: 12,
+                      right: 12,
                       bgcolor: 'primary.main',
                       color: 'white',
-                      px: 1,
+                      px: 2,
                       py: 0.5,
                       borderRadius: 1,
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
                     }}
                   >
-                    RECOMMENDED
+                    POPULAR
                   </Box>
                 )}
-
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant={'h5'} component={'div'} gutterBottom>
+                <CardContent sx={{ p: 3, flexGrow: 1 }}>
+                  <Typography variant='h5' component='div' gutterBottom>
                     {plan.name}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 2 }}>
-                    <Typography variant={'h4'} component={'span'}>
-                      {plan.price}
+                    <Typography variant='h4' component='span' fontWeight={700}>
+                      ${plan.price}
                     </Typography>
-                    {plan.period && (
-                      <Typography
-                        variant={'subtitle1'}
-                        component={'span'}
-                        color={'text.secondary'}
-                        sx={{ ml: 1 }}
-                      >
-                        /{plan.period}
-                      </Typography>
-                    )}
+                    <Typography
+                      variant='subtitle1'
+                      component='span'
+                      color='text.secondary'
+                      sx={{ ml: 1 }}
+                    >
+                      /month
+                    </Typography>
                   </Box>
                   <Typography
-                    variant={'body2'}
-                    color={'text.secondary'}
+                    variant='body2'
+                    color='text.secondary'
+                    paragraph
                     sx={{ mb: 2 }}
                   >
                     {plan.description}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
-                  <List dense disablePadding>
+                  <List disablePadding>
                     {plan.features.map((feature, index) => (
-                      <ListItem key={index} disableGutters disablePadding>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <CheckCircleOutlineIcon
-                            color={'primary'}
-                            fontSize={'small'}
+                      <ListItem
+                        key={index}
+                        disablePadding
+                        sx={{ py: 0.5, px: 0 }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                          <CheckCircleIcon
+                            color='primary'
+                            fontSize='small'
+                            sx={{ opacity: 0.9 }}
                           />
                         </ListItemIcon>
-                        <ListItemText primary={feature} />
+                        <ListItemText
+                          primary={feature}
+                          primaryTypographyProps={{
+                            variant: 'body2',
+                            fontWeight: 500,
+                          }}
+                        />
                       </ListItem>
                     ))}
                   </List>
                 </CardContent>
-                <CardActions sx={{ p: 2, pt: 0 }}>
+                <Box sx={{ p: 3, pt: 0 }}>
                   <Button
                     fullWidth
-                    variant={plan.id === 'free' ? 'outlined' : 'contained'}
-                    color={plan.recommended ? 'primary' : 'inherit'}
+                    variant='contained'
+                    color='primary'
+                    size='large'
                     onClick={() => handleSubscribe(plan.id)}
-                    disabled={plan.id === 'free'}
+                    disabled={
+                      plan.id === currentPlan ||
+                      (loading && selectedPlan === plan.id)
+                    }
+                    sx={{
+                      py: 1.5,
+                      fontWeight: 600,
+                      ...(plan.popular && {
+                        bgcolor: theme.palette.primary.main,
+                        '&:hover': {
+                          bgcolor: theme.palette.primary.dark,
+                        },
+                      }),
+                    }}
                   >
-                    {plan.buttonText}
+                    {loading && selectedPlan === plan.id
+                      ? 'Processing...'
+                      : plan.price === 0
+                        ? 'Get Started'
+                        : plan.id === currentPlan
+                          ? 'Current Plan'
+                          : 'Subscribe Now'}
                   </Button>
-                </CardActions>
+                </Box>
               </Card>
             </Grid>
           ))}
         </Grid>
-
         <Box sx={{ mt: 4, textAlign: 'center' }}>
-          <Typography variant={'body2'} color={'text.secondary'}>
-            All plans come with a 7-day money-back guarantee.
-            <br />
-            Have questions? Contact our{' '}
-            <a href={'mailto:support@example.com'}>support team</a>.
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ fontStyle: 'italic' }}
+          >
+            Note: This is a demo only. No actual subscription will be processed.
           </Typography>
         </Box>
       </DialogContent>

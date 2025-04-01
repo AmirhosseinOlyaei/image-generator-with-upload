@@ -1,8 +1,6 @@
 'use client'
 
 import { useApp } from '@/contexts/AppContext'
-import { useAuth } from '@/hooks/useAuth'
-import type { UserProfile } from '@/lib/supabase'
 import {
   AccountCircle as AccountCircleIcon,
   Edit as EditIcon,
@@ -24,11 +22,31 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 
+// Mock user profile type
+interface UserProfile {
+  id: string
+  full_name: string
+  email?: string
+  avatar_url?: string | null
+  credits: number
+  plan: string
+}
+
+// Mock profile data
+const mockProfile: UserProfile = {
+  id: 'mock-user-id',
+  full_name: 'Demo User',
+  email: 'demo@example.com',
+  avatar_url: null,
+  credits: 5,
+  plan: 'free',
+}
+
 export default function AccountSettings() {
-  const { user, profile, updateProfile, loading: authLoading } = useAuth()
   const { addNotification } = useApp()
 
   // Form state
+  const [profile] = useState<UserProfile>(mockProfile)
   const [fullName, setFullName] = useState(profile?.full_name || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,30 +65,21 @@ export default function AccountSettings() {
       setError(null)
       setSuccess(null)
 
-      const updates: Partial<UserProfile> = {
-        full_name: fullName.trim(),
-      }
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      const success = await updateProfile(updates)
+      // Update would go here in a real app
 
-      if (success) {
-        setSuccess('Profile updated successfully')
-        setEditMode(false)
-        addNotification({
-          message: 'Profile updated successfully',
-          type: 'success',
-        })
-      } else {
-        throw new Error('Failed to update profile')
-      }
-    } catch (error: Error | unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An error occurred while updating profile'
-      setError(errorMessage)
+      setSuccess('Profile updated successfully')
       addNotification({
-        message: errorMessage,
+        message: 'Profile updated successfully',
+        type: 'success',
+      })
+      setEditMode(false)
+    } catch (err) {
+      setError('Failed to update profile')
+      addNotification({
+        message: 'Failed to update profile',
         type: 'error',
       })
     } finally {
@@ -79,147 +88,49 @@ export default function AccountSettings() {
   }
 
   // Cancel edit mode
-  const handleCancelEdit = () => {
+  const handleCancel = () => {
     setFullName(profile?.full_name || '')
     setEditMode(false)
     setError(null)
   }
 
-  if (authLoading) {
+  if (!profile) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-        <CircularProgress />
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <CircularProgress size={40} />
       </Box>
     )
-  }
-
-  if (!user || !profile) {
-    return <Alert severity='warning'>Please sign in to view your profile</Alert>
-  }
-
-  // Get subscription tier display name
-  const getSubscriptionDisplay = () => {
-    if (!profile.plan) return 'Free Plan'
-    return (
-      profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1) + ' Plan'
-    )
-  }
-
-  // Get credits display
-  const getCreditsDisplay = () => {
-    const credits = profile.credits || 0
-    const limit = 1 // Assuming 1 free generation
-    return `${credits} / ${limit}`
   }
 
   return (
-    <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', mr: 2 }}>
-          {profile.full_name?.charAt(0)?.toUpperCase() ||
-            user.email?.charAt(0)?.toUpperCase() || <AccountCircleIcon />}
-        </Avatar>
-        <Box>
-          <Typography variant='h5' gutterBottom>
-            {profile.full_name || 'User'}
-          </Typography>
-          <Typography variant='body2' color='text.secondary'>
-            {user.email}
-          </Typography>
-          <Chip
-            label={getSubscriptionDisplay()}
-            size='small'
-            color={profile.plan === 'free' ? 'default' : 'primary'}
-            sx={{ mt: 1 }}
-          />
-        </Box>
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
-      <Typography
-        variant='h6'
-        gutterBottom
-        sx={{ display: 'flex', alignItems: 'center' }}
+    <Paper sx={{ p: 3, mb: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 3,
+        }}
       >
-        <AccountCircleIcon sx={{ mr: 1 }} />
-        Account Information
-      </Typography>
-
-      {error && (
-        <Alert severity='error' sx={{ my: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity='success' sx={{ my: 2 }}>
-          {success}
-        </Alert>
-      )}
-
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid
-          sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 6' } }}
-        >
-          <TextField
-            fullWidth
-            label='Email Address'
-            value={user.email || ''}
-            disabled
-            variant='outlined'
-            sx={{ mb: 3 }}
-          />
-        </Grid>
-
-        <Grid
-          sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 6' } }}
-        >
-          <TextField
-            fullWidth
-            label='Full Name'
-            value={fullName}
-            onChange={e => setFullName(e.target.value)}
-            disabled={!editMode}
-            variant='outlined'
-            sx={{ mb: 3 }}
-          />
-        </Grid>
-
-        <Grid
-          sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 6' } }}
-        >
-          <TextField
-            fullWidth
-            label='Membership'
-            value={getSubscriptionDisplay()}
-            disabled
-            variant='outlined'
-            sx={{ mb: 3 }}
-          />
-        </Grid>
-
-        <Grid
-          sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 6' } }}
-        >
-          <TextField
-            fullWidth
-            label='Free Credits'
-            value={getCreditsDisplay()}
-            disabled
-            variant='outlined'
-            sx={{ mb: 3 }}
-          />
-        </Grid>
-      </Grid>
-
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-        {editMode ? (
-          <>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <AccountCircleIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant='h6'>Account Information</Typography>
+        </Box>
+        {!editMode ? (
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => setEditMode(true)}
+            size='small'
+          >
+            Edit
+          </Button>
+        ) : (
+          <Box>
             <Button
               variant='outlined'
-              onClick={handleCancelEdit}
-              disabled={loading}
+              size='small'
+              onClick={handleCancel}
+              sx={{ mr: 1 }}
             >
               Cancel
             </Button>
@@ -230,46 +141,136 @@ export default function AccountSettings() {
               }
               onClick={handleUpdateProfile}
               disabled={loading}
+              size='small'
             >
-              Save Changes
+              Save
             </Button>
-          </>
-        ) : (
-          <Button
-            variant='contained'
-            startIcon={<EditIcon />}
-            onClick={() => setEditMode(true)}
-          >
-            Edit Profile
-          </Button>
+          </Box>
         )}
       </Box>
 
-      <Divider sx={{ my: 4 }} />
+      <Divider sx={{ mb: 3 }} />
 
-      <Typography
-        variant='h6'
-        gutterBottom
-        sx={{ display: 'flex', alignItems: 'center' }}
-      >
-        <KeyIcon sx={{ mr: 1 }} />
-        Security Settings
-      </Typography>
+      {error && (
+        <Alert severity='error' sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
-      <Box sx={{ mt: 2 }}>
-        <Button
-          variant='outlined'
-          sx={{ mr: 2 }}
-          onClick={() => {
-            addNotification({
-              message: 'Password reset email sent. Please check your inbox.',
-              type: 'info',
-            })
-          }}
-        >
-          Change Password
-        </Button>
-      </Box>
+      {success && (
+        <Alert severity='success' sx={{ mb: 3 }}>
+          {success}
+        </Alert>
+      )}
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Avatar
+              src={profile.avatar_url || undefined}
+              sx={{ width: 100, height: 100, mb: 2 }}
+            >
+              {profile.full_name?.charAt(0) || 'U'}
+            </Avatar>
+            <Typography variant='subtitle1' gutterBottom>
+              {profile.full_name}
+            </Typography>
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+              {profile.email}
+            </Typography>
+            <Chip
+              label={`${profile.plan.charAt(0).toUpperCase()}${profile.plan.slice(
+                1,
+              )} Plan`}
+              color={
+                profile.plan === 'premium'
+                  ? 'secondary'
+                  : profile.plan === 'pro'
+                    ? 'primary'
+                    : 'default'
+              }
+              size='small'
+            />
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Box component='form' noValidate>
+            <TextField
+              margin='normal'
+              required
+              fullWidth
+              id='fullName'
+              label='Full Name'
+              name='fullName'
+              autoComplete='name'
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              disabled={!editMode || loading}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              margin='normal'
+              fullWidth
+              id='email'
+              label='Email Address'
+              name='email'
+              autoComplete='email'
+              value={profile.email || ''}
+              disabled
+              sx={{ mb: 3 }}
+            />
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 2,
+              }}
+            >
+              <Typography variant='subtitle1'>API Keys</Typography>
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<KeyIcon />}
+                onClick={() => {
+                  // This would navigate to API keys management in a real app
+                  addNotification({
+                    message: 'API Keys management is disabled in demo mode',
+                    type: 'info',
+                  })
+                }}
+              >
+                Manage Keys
+              </Button>
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 2,
+              }}
+            >
+              <Typography variant='subtitle1'>Credits</Typography>
+              <Chip
+                label={`${profile.credits} credits remaining`}
+                color='primary'
+                variant='outlined'
+              />
+            </Box>
+          </Box>
+        </Grid>
+      </Grid>
     </Paper>
   )
 }

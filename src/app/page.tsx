@@ -4,71 +4,18 @@ import GhibliShowcase from '@/components/landing/GhibliShowcase'
 import HowItWorks from '@/components/landing/HowItWorks'
 import Footer from '@/components/navigation/Footer'
 import MainAppBar from '@/components/navigation/MainAppBar'
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Typography,
-} from '@mui/material'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Box, Button, Container, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export default function Home() {
   const router = useRouter()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const supabase = createClientComponentClient()
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Check authentication status directly from Supabase
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        setIsCheckingAuth(true)
-        const { data, error } = await supabase.auth.getSession()
-
-        if (error) {
-          throw error
-        }
-
-        setIsAuthenticated(!!data.session)
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error checking auth status:', error)
-        setIsAuthenticated(false)
-      } finally {
-        setIsCheckingAuth(false)
-      }
-    }
-
-    checkAuthStatus()
-
-    // Set up auth state listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(event => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setIsAuthenticated(true)
-      } else if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false)
-      }
-    })
-
-    // Cleanup subscription
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [supabase])
-
-  // TEMPORARILY DISABLED AUTH: Always redirect to dashboard
+  // Simplified approach without authentication
   const handleGetStarted = () => {
+    setIsLoading(true)
     router.push('/dashboard')
-    // if (isAuthenticated) {
-    //   router.push('/dashboard')
-    // } else {
-    //   router.push('/auth/signin')
-    // }
   }
 
   return (
@@ -120,7 +67,7 @@ export default function Home() {
               variant='contained'
               size='large'
               onClick={handleGetStarted}
-              // disabled={isCheckingAuth}
+              disabled={isLoading}
               sx={{
                 py: 2,
                 px: 4,
@@ -133,13 +80,7 @@ export default function Home() {
                 },
               }}
             >
-              {isCheckingAuth ? (
-                <CircularProgress size={24} color='inherit' />
-              ) : isAuthenticated ? (
-                'Go to Dashboard'
-              ) : (
-                'Get Started Now'
-              )}
+              Get Started Now
             </Button>
           </Container>
         </Box>

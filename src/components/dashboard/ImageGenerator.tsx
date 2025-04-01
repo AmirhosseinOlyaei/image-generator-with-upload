@@ -58,8 +58,7 @@ export default function ImageGenerator({
   freeGenerationsLeft = 0,
   subscriptionTier = 'free',
 }: ImageGeneratorProps) {
-  const { addNotification, getProviderKey, userPreferences, addRecentPrompt } =
-    useApp()
+  const { addNotification, getProviderKey, addRecentPrompt } = useApp()
 
   const {
     file,
@@ -73,7 +72,7 @@ export default function ImageGenerator({
   // State for image generation
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT)
   const [provider, setProvider] = useState<Provider>(
-    (userPreferences.defaultProvider || 'openai') as Provider,
+    (getProviderKey('openai') ? 'openai' : 'stability') as Provider,
   )
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)

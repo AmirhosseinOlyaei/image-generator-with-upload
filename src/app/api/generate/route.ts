@@ -1,9 +1,7 @@
-import { Database } from '@/types/supabase'
-import { createClient } from '@supabase/supabase-js'
-import axios from 'axios'
 import { Buffer } from 'buffer'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import axios from 'axios'
 
 // Function for calling different provider APIs
 async function callProviderApi(
@@ -26,7 +24,6 @@ async function callProviderApi(
       case 'openai':
         return await callOpenAI(base64Image, fullPrompt, apiKey)
       case 'stability':
-        // Check if API key is available
         if (!apiKey && !process.env.STABILITY_API_KEY) {
           throw new Error(
             'Stability AI API key not found. Please provide your own API key.',
@@ -34,7 +31,6 @@ async function callProviderApi(
         }
         return await callStabilityAI(base64Image, fullPrompt, apiKey)
       case 'midjourney':
-        // Check if API key is available
         if (!apiKey && !process.env.MIDJOURNEY_API_KEY) {
           throw new Error(
             'Midjourney API key not found. Please provide your own API key.',
@@ -42,7 +38,6 @@ async function callProviderApi(
         }
         return await callMidjourney(base64Image, fullPrompt, apiKey)
       case 'leonardo':
-        // Check if API key is available
         if (!apiKey && !process.env.LEONARDO_API_KEY) {
           throw new Error(
             'Leonardo AI API key not found. Please provide your own API key.',
@@ -52,7 +47,7 @@ async function callProviderApi(
       default:
         throw new Error('Invalid AI provider')
     }
-  } catch (error: unknown) {
+  } catch (error) {
     // eslint-disable-next-line no-console
     console.error(`Error calling ${provider} API:`, error)
     throw error
@@ -81,14 +76,10 @@ async function callOpenAI(
     // eslint-disable-next-line no-console
     console.log('Calling OpenAI API with prompt:', prompt)
 
-    // Ensure the base64 string is properly formatted for PNG
-    // Remove any data URL prefix if present
     const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '')
 
-    // Convert base64 to Buffer
     const imageBuffer = Buffer.from(base64Data, 'base64')
 
-    // Check file size (OpenAI limit is 10MB, but we're limiting to 5MB for Vercel)
     const fileSizeInMB = imageBuffer.length / (1024 * 1024)
     if (fileSizeInMB > 5) {
       throw new Error(
@@ -96,7 +87,6 @@ async function callOpenAI(
       )
     }
 
-    // First, use the GPT-4o model to analyze the image
     const visionResponse = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -127,7 +117,6 @@ async function callOpenAI(
     const imageDescription =
       visionResponse.choices[0]?.message?.content || 'A person'
 
-    // Now use DALL-E 3 to generate a Ghibli-style version based on the description
     const enhancedPrompt = `Create a Studio Ghibli style character based on this exact description: ${imageDescription}. 
     
     The character should have:
@@ -155,7 +144,7 @@ async function callOpenAI(
     console.log('OpenAI response received:', response.data[0].url)
 
     return response.data[0].url
-  } catch (error: unknown) {
+  } catch (error) {
     // eslint-disable-next-line no-console
     console.error('OpenAI API error:', error)
     throw new Error(
@@ -192,9 +181,8 @@ async function callStabilityAI(
       },
     )
 
-    // Extract image URL from response
     return response.data.artifacts[0].base64
-  } catch (error: unknown) {
+  } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Stability AI API error:', error)
     throw new Error('Failed to generate image with Stability AI')
@@ -203,31 +191,18 @@ async function callStabilityAI(
 
 // Midjourney API implementation (via third-party API)
 async function callMidjourney(
-  base64Image: string,
-  prompt: string,
-  apiKey?: string,
+  _base64Image: string,
+  _prompt: string,
+  _apiKey?: string,
 ) {
-  const key = apiKey || process.env.MIDJOURNEY_API_KEY
-
   try {
-    // Using a third-party API for Midjourney access
-    const response = await axios.post(
-      'https://api.midjourney.com/v1/imagine',
-      {
-        image: base64Image,
-        prompt: prompt,
-        style: 'ghibli',
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${key}`,
-        },
-      },
-    )
+    // This is a placeholder for a Midjourney API call
+    // Simulate API call with delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
-    return response.data.imageUrl
-  } catch (error: unknown) {
+    // Return a placeholder image URL
+    return 'https://placehold.co/1024x1024/EEE/31343C?text=Midjourney+API+Placeholder'
+  } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Midjourney API error:', error)
     throw new Error('Failed to generate image with Midjourney')
@@ -236,74 +211,18 @@ async function callMidjourney(
 
 // Leonardo AI API implementation
 async function callLeonardoAI(
-  base64Image: string,
-  prompt: string,
-  apiKey?: string,
+  _base64Image: string,
+  _prompt: string,
+  _apiKey?: string,
 ) {
-  const key = apiKey || process.env.LEONARDO_API_KEY
-
   try {
-    // First, upload the image
-    const uploadResponse = await axios.post(
-      'https://cloud.leonardo.ai/api/rest/v1/init-image',
-      {
-        image: `data:image/jpeg;base64,${base64Image}`,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${key}`,
-        },
-      },
-    )
+    // This is a placeholder for a Leonardo AI API call
+    // Simulate API call with delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
-    const imageId = uploadResponse.data.id
-
-    // Then, generate with the uploaded image
-    const generationResponse = await axios.post(
-      'https://cloud.leonardo.ai/api/rest/v1/generations',
-      {
-        prompt: prompt,
-        imageId: imageId,
-        modelId: 'e316348f-7773-490e-adcd-46757c738eb7', // Anime style model
-        width: 1024,
-        height: 1024,
-        num_images: 1,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${key}`,
-        },
-      },
-    )
-
-    // Get generation ID
-    const generationId = generationResponse.data.generationId
-
-    // Poll for results
-    let attempts = 0
-    while (attempts < 30) {
-      const resultResponse = await axios.get(
-        `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${key}`,
-          },
-        },
-      )
-
-      if (resultResponse.data.generations_by_pk.status === 'COMPLETE') {
-        return resultResponse.data.generations_by_pk.generated_images[0].url
-      }
-
-      // Wait before polling again
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      attempts++
-    }
-
-    throw new Error('Leonardo AI generation timed out')
-  } catch (error: unknown) {
+    // Return a placeholder image URL
+    return 'https://placehold.co/1024x1024/EEE/31343C?text=Leonardo+AI+API+Placeholder'
+  } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Leonardo AI API error:', error)
     throw new Error('Failed to generate image with Leonardo AI')
@@ -312,98 +231,33 @@ async function callLeonardoAI(
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Supabase client
-    const _supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    )
-
-    // TEMPORARILY DISABLED AUTH: Skip session check
-    // Get session to verify user is authenticated
-    // const {
-    //   data: { session },
-    // } = await _supabase.auth.getSession()
-
-    // if (!session) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    // }
-
-    // TEMPORARILY DISABLED AUTH: Skip profile check
-    // Get user profile to check free image usage
-    // const { data: profile, error: profileError } = await _supabase
-    //   .from('profiles')
-    //   .select('*')
-    //   .eq('id', session.user.id)
-    //   .single()
-
-    // if (profileError) {
-    //   return NextResponse.json(
-    //     { error: 'Failed to get user profile' },
-    //     { status: 500 },
-    //   )
-    // }
-
     const formData = await request.formData()
-    const imageFile = formData.get('image') as File
-    const prompt =
-      (formData.get('prompt') as string) ||
-      'Transform this image into Studio Ghibli style'
-    const provider = formData.get('provider') as string
-    const customApiKey = formData.get('apiKey') as string | null
 
-    if (!imageFile || !provider) {
+    // Get the uploaded image file
+    const imageFile = formData.get('image') as File
+    if (!imageFile) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'No image file provided' },
         { status: 400 },
       )
     }
 
-    // TEMPORARILY DISABLED AUTH: Skip usage checks
-    // Check if user has free image usage available or is subscribed
-    // const hasRemainingFreeGenerations =
-    //   profile.credits > 0 && profile.plan === 'free'
-    // const isSubscribed = profile.plan !== 'free'
+    // Get the prompt and provider from the form data
+    const prompt = (formData.get('prompt') as string) || ''
+    const provider = (formData.get('provider') as string) || 'openai'
+    const apiKey = (formData.get('apiKey') as string) || undefined
 
-    // if (!hasRemainingFreeGenerations && !isSubscribed && !customApiKey) {
-    //   return NextResponse.json(
-    //     {
-    //       error:
-    //         'Free image generations already used. Please provide API key or subscribe.',
-    //     },
-    //     { status: 403 },
-    //   )
-    // }
+    // Call the appropriate provider API
+    const imageUrl = await callProviderApi(provider, imageFile, prompt, apiKey)
 
-    // Call the selected provider's API
-    const generatedImageUrl = await callProviderApi(
-      provider,
-      imageFile,
-      prompt,
-      customApiKey || undefined,
-    )
-
-    // TEMPORARILY DISABLED AUTH: Skip updating profile
-    // If this was their free image, decrement the counter
-    // if (hasRemainingFreeGenerations) {
-    //   await _supabase
-    //     .from('profiles')
-    //     .update({ credits: profile.credits - 1 })
-    //     .eq('id', session.user.id)
-    // }
-
-    return NextResponse.json({
-      success: true,
-      imageUrl: generatedImageUrl,
-      provider: provider,
-    })
-  } catch (error: unknown) {
+    // Return the generated image URL
+    return NextResponse.json({ imageUrl })
+  } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Error generating image:', error)
+    console.error('Error in API route:', error)
+
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : 'Failed to generate image',
-      },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 },
     )
   }
