@@ -29,9 +29,9 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.0.0",
     "@mui/material": "^6.0.0",
-    "axios": "^1.20.0",
+    "axios": "^1.21.0",
     "buffer": "^6.0.3",
-    "next": "^15.5.28",
+    "next": "^16.4.3",
     "openai": "^4.90.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
